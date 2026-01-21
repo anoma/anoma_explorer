@@ -26,6 +26,9 @@ config :logger, level: :warning
 # Oban testing mode - inline execution, no actual jobs
 config :anoma_explorer, Oban, testing: :inline
 
+# Use mock HTTP client in tests
+config :anoma_explorer, :http_client, AnomaExplorer.HTTPClientMock
+
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
 
