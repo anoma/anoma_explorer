@@ -5,13 +5,11 @@ defmodule AnomaExplorer.MixProject do
     [
       app: :anoma_explorer,
       version: "0.1.0",
-      elixir: "~> 1.15",
+      elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps(),
-      compilers: [:phoenix_live_view] ++ Mix.compilers(),
-      listeners: [Phoenix.CodeReloader]
+      deps: deps()
     ]
   end
 
@@ -40,14 +38,14 @@ defmodule AnomaExplorer.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:phoenix, "~> 1.8.3"},
-      {:phoenix_ecto, "~> 4.5"},
-      {:ecto_sql, "~> 3.13"},
-      {:postgrex, ">= 0.0.0"},
-      {:phoenix_html, "~> 4.1"},
-      {:phoenix_live_reload, "~> 1.2", only: :dev},
-      {:phoenix_live_view, "~> 1.1.0"},
-      {:lazy_html, ">= 0.1.0", only: :test},
+      {:phoenix, "~> 1.8"},
+      {:phoenix_ecto, "~> 4.6"},
+      {:ecto_sql, "~> 3.12"},
+      {:postgrex, "~> 0.19"},
+      {:phoenix_html, "~> 4.2"},
+      {:phoenix_live_reload, "~> 1.5", only: :dev},
+      {:phoenix_live_view, "~> 1.0.0"},
+      {:floki, "~> 0.37", only: :test},
       {:esbuild, "~> 0.10", runtime: Mix.env() == :dev},
       {:tailwind, "~> 0.3", runtime: Mix.env() == :dev},
       {:heroicons,
@@ -57,18 +55,18 @@ defmodule AnomaExplorer.MixProject do
        app: false,
        compile: false,
        depth: 1},
-      {:telemetry_metrics, "~> 1.0"},
-      {:telemetry_poller, "~> 1.0"},
-      {:gettext, "~> 1.0"},
-      {:jason, "~> 1.2"},
-      {:dns_cluster, "~> 0.2.0"},
-      {:bandit, "~> 1.5"},
+      {:telemetry_metrics, "~> 1.1"},
+      {:telemetry_poller, "~> 1.1"},
+      {:gettext, "~> 0.26 or ~> 1.0"},
+      {:jason, "~> 1.4"},
+      {:dns_cluster, "~> 0.2"},
+      {:bandit, "~> 1.6"},
       # Background jobs
-      {:oban, "~> 2.18"},
+      {:oban, "~> 2.20"},
       # HTTP client
-      {:finch, "~> 0.18"},
+      {:finch, "~> 0.20"},
       # Testing
-      {:mox, "~> 1.1", only: :test}
+      {:mox, "~> 1.2", only: :test}
     ]
   end
 
