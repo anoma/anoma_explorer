@@ -18,6 +18,10 @@ defmodule AnomaExplorerWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+
+    # LiveView routes
+    live "/activity", ActivityLive, :index
+    live "/analytics", AnalyticsLive, :index
   end
 
   # Other scopes may use custom stacks.

@@ -8,6 +8,7 @@ defmodule AnomaExplorer.Ingestion.Sync do
   require Logger
 
   alias AnomaExplorer.Alchemy
+  alias AnomaExplorer.Activity.Broadcaster
   alias AnomaExplorer.Activity.ContractActivity
   alias AnomaExplorer.Ingestion
   alias AnomaExplorer.Repo
@@ -128,6 +129,14 @@ defmodule AnomaExplorer.Ingestion.Sync do
 
     case Repo.transaction(multi) do
       {:ok, %{upsert_logs: count}} ->
+        # Broadcast new activities for realtime updates
+        if count > 0 do
+          # Build activity structs for broadcasting
+          broadcast_activities = Enum.map(activities, fn attrs ->
+            struct(ContractActivity, attrs)
+          end)
+          Broadcaster.broadcast_new_activities(broadcast_activities)
+        end
         count
 
       {:error, _step, reason, _changes} ->
