@@ -65,13 +65,44 @@ defmodule AnomaExplorer.RateLimiterTest do
     test "returns timeout error when limit exceeded and max wait exceeded" do
       key = "wait_timeout_#{System.unique_integer([:positive])}"
 
-      # Fill the bucket
-      for _ <- 1..5 do
-        RateLimiter.acquire(key)
+      # Fill the bucket and immediately check - must happen in same second window
+      # Keep trying until we get rate limited, then test the timeout
+      fill_and_test = fn ->
+        # Fill the bucket fresh
+        for _ <- 1..5 do
+          RateLimiter.acquire(key)
+        end
+
+        # Verify we're actually rate limited before testing timeout
+        case RateLimiter.acquire(key) do
+          {:error, :rate_limited} ->
+            # Now test that wait_and_acquire times out with very short wait
+            # Use 10ms which is less than the 100ms retry sleep
+            RateLimiter.wait_and_acquire(key, 10)
+
+          :ok ->
+            # Second boundary crossed, retry with new key
+            :retry
+        end
       end
 
-      # Should timeout quickly with small max_wait
-      assert {:error, :timeout} = RateLimiter.wait_and_acquire(key, 50)
+      result = fill_and_test.()
+
+      result =
+        if result == :retry do
+          # Use a fresh key and try again
+          key2 = "wait_timeout_#{System.unique_integer([:positive])}"
+
+          for _ <- 1..5 do
+            RateLimiter.acquire(key2)
+          end
+
+          RateLimiter.wait_and_acquire(key2, 10)
+        else
+          result
+        end
+
+      assert {:error, :timeout} = result
     end
   end
 end
