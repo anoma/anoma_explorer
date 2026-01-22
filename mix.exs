@@ -5,7 +5,7 @@ defmodule AnomaExplorer.MixProject do
     [
       app: :anoma_explorer,
       version: "0.1.0",
-      elixir: "~> 1.17 or ~> 1.18",
+      elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
@@ -17,7 +17,7 @@ defmodule AnomaExplorer.MixProject do
   # Configuration for the OTP application.
   #
   # Type `mix help compile.app` for more information.
-  def application do
+def application do
     [
       mod: {AnomaExplorer.Application, []},
       extra_applications: [:logger, :runtime_tools]
@@ -39,35 +39,35 @@ defmodule AnomaExplorer.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
-      {:phoenix, "~> 1.8"},
-      {:phoenix_ecto, "~> 4.6"},
-      {:ecto_sql, "~> 3.12"},
-      {:postgrex, "~> 0.19"},
-      {:phoenix_html, "~> 4.2"},
-      {:phoenix_live_reload, "~> 1.5", only: :dev},
-      {:phoenix_live_view, "~> 1.0.0"},
-      {:floki, "~> 0.37", only: :test},
+      # Override decimal to get OTP 28 compatible version
+      {:decimal, github: "ericmj/decimal", override: true},
+      {:phoenix, "~> 1.8.3"},
+      {:phoenix_ecto, "~> 4.7.0"},
+      {:ecto_sql, "~> 3.13.4"},
+      {:postgrex, "~> 0.22.0"},
+      {:phoenix_html, "~> 4.3.0"},
+      {:phoenix_live_reload, "~> 1.6.2", only: :dev},
+      {:phoenix_live_view, "~> 1.1.20"},
+      {:floki, "~> 0.38.0", only: :test},
       {:esbuild, "~> 0.10", runtime: Mix.env() == :dev},
-      {:tailwind, "~> 0.3", runtime: Mix.env() == :dev},
+      {:tailwind, "~> 0.4.1", runtime: Mix.env() == :dev},
+      {:ex_heroicons, "~> 3.1.0"},
       {:heroicons,
        github: "tailwindlabs/heroicons",
-       tag: "v2.2.0",
+       tag: "v2.1.5",
        sparse: "optimized",
        app: false,
        compile: false,
        depth: 1},
-      {:telemetry_metrics, "~> 1.1"},
-      {:telemetry_poller, "~> 1.1"},
+      {:telemetry_metrics, "~> 1.1.0"},
+      {:telemetry_poller, "~> 1.3.0"},
       {:gettext, "~> 0.26 or ~> 1.0"},
       {:jason, "~> 1.4"},
       {:dns_cluster, "~> 0.2"},
-      {:bandit, "~> 1.6"},
-      # HTTP client
-      {:finch, "~> 0.20"},
+      # HTTP server
+      {:plug_cowboy, "~> 2.7"},
       # Testing
-      {:mox, "~> 1.2", only: :test},
-      # AI development tools
-      {:tidewave, "~> 0.5", only: :dev}
+      {:mox, "~> 1.2", only: :test}
     ]
   end
 
