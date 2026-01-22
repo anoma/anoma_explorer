@@ -111,6 +111,57 @@ defmodule AnomaExplorer.Indexer.GraphQL.QueryBuilder do
     end
   end
 
+  @doc """
+  Adds a nested ilike filter (for fields inside a relationship).
+  Example: evmTransaction: {txHash: {_ilike: "%0x123%"}}
+  """
+  @spec add_nested_ilike_filter(list(), keyword(), atom(), atom(), atom()) :: list()
+  def add_nested_ilike_filter(conditions, opts, opt_key, parent_field, field_name) do
+    case Keyword.get(opts, opt_key) do
+      nil -> conditions
+      "" -> conditions
+      value -> conditions ++ [{parent_field, :nested_ilike, {field_name, value}}]
+    end
+  end
+
+  @doc """
+  Adds a nested chain_id filter (for fields inside a relationship).
+  """
+  @spec add_nested_chain_id_filter(list(), keyword(), atom()) :: list()
+  def add_nested_chain_id_filter(conditions, opts, parent_field) do
+    case Keyword.get(opts, :chain_id) do
+      nil -> conditions
+      "" -> conditions
+      id -> conditions ++ [{parent_field, :nested_eq, {:chainId, id}}]
+    end
+  end
+
+  @doc """
+  Adds nested block range filters (for fields inside a relationship).
+  """
+  @spec add_nested_block_range_filters(list(), keyword(), atom()) :: list()
+  def add_nested_block_range_filters(conditions, opts, parent_field) do
+    conditions
+    |> add_nested_block_min_filter(opts, parent_field)
+    |> add_nested_block_max_filter(opts, parent_field)
+  end
+
+  defp add_nested_block_min_filter(conditions, opts, parent_field) do
+    case Keyword.get(opts, :block_min) do
+      nil -> conditions
+      "" -> conditions
+      min -> conditions ++ [{parent_field, :nested_gte, {:blockNumber, min}}]
+    end
+  end
+
+  defp add_nested_block_max_filter(conditions, opts, parent_field) do
+    case Keyword.get(opts, :block_max) do
+      nil -> conditions
+      "" -> conditions
+      max -> conditions ++ [{parent_field, :nested_lte, {:blockNumber, max}}]
+    end
+  end
+
   # Private: Build individual condition strings
   defp build_condition({field, :eq, value}) when is_integer(value) do
     "#{field}: {_eq: #{value}}"
@@ -157,6 +208,35 @@ defmodule AnomaExplorer.Indexer.GraphQL.QueryBuilder do
       build_condition({field, op, value})
     end)
     "_or: [#{Enum.map(or_parts, fn p -> "{#{p}}" end) |> Enum.join(", ")}]"
+  end
+
+  # Nested filters for relationship fields (e.g., evmTransaction: {txHash: {_ilike: "%0x%"}})
+  defp build_condition({parent, :nested_ilike, {field, value}}) do
+    "#{parent}: {#{field}: {_ilike: \"%#{Formatting.escape_string(value)}%\"}}"
+  end
+
+  defp build_condition({parent, :nested_eq, {field, value}}) when is_integer(value) do
+    "#{parent}: {#{field}: {_eq: #{value}}}"
+  end
+
+  defp build_condition({parent, :nested_eq, {field, value}}) do
+    "#{parent}: {#{field}: {_eq: #{value}}}"
+  end
+
+  defp build_condition({parent, :nested_gte, {field, value}}) when is_integer(value) do
+    "#{parent}: {#{field}: {_gte: #{value}}}"
+  end
+
+  defp build_condition({parent, :nested_gte, {field, value}}) do
+    "#{parent}: {#{field}: {_gte: #{value}}}"
+  end
+
+  defp build_condition({parent, :nested_lte, {field, value}}) when is_integer(value) do
+    "#{parent}: {#{field}: {_lte: #{value}}}"
+  end
+
+  defp build_condition({parent, :nested_lte, {field, value}}) do
+    "#{parent}: {#{field}: {_lte: #{value}}}"
   end
 
   defp build_condition(_), do: nil

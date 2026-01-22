@@ -26,19 +26,24 @@ defmodule AnomaExplorer.Indexer.GraphQL do
   @callback post_graphql_raw(String.t(), String.t(), integer(), integer()) ::
               {:ok, map()} | {:error, term()}
 
-  @type transaction :: %{
+  @type evm_transaction :: %{
           id: String.t(),
           txHash: String.t(),
           blockNumber: integer(),
           timestamp: integer(),
           chainId: integer(),
-          tags: [String.t()],
-          logicRefs: [String.t()],
           from: String.t() | nil,
           value: integer() | nil,
           gasPrice: integer() | nil,
           gas: integer() | nil,
           gasUsed: integer() | nil
+        }
+
+  @type transaction :: %{
+          id: String.t(),
+          tags: [String.t()],
+          logicRefs: [String.t()],
+          evmTransaction: evm_transaction()
         }
 
   @type resource :: %{
@@ -48,9 +53,8 @@ defmodule AnomaExplorer.Indexer.GraphQL do
           blockNumber: integer(),
           chainId: integer(),
           logicRef: String.t() | nil,
-          quantity: integer() | nil,
           decodingStatus: String.t(),
-          transaction: %{txHash: String.t()} | nil
+          transaction: %{evmTransaction: %{txHash: String.t()}} | nil
         }
 
   @type action :: %{
@@ -140,23 +144,24 @@ defmodule AnomaExplorer.Indexer.GraphQL do
     where_conditions = build_transaction_where(opts)
     where_clause = if where_conditions == "", do: "", else: ", where: {#{where_conditions}}"
 
-    # Note: from, value, gasPrice, gas, gasUsed fields require indexer update and reindex.
-    # Once indexed, uncomment these fields below:
-    # from
-    # value
-    # gasPrice
-    # gas
-    # gasUsed
     query = """
     query {
-      Transaction(limit: #{limit}, offset: #{offset}, order_by: {blockNumber: desc}#{where_clause}) {
+      Transaction(limit: #{limit}, offset: #{offset}, order_by: {evmTransaction: {blockNumber: desc}}#{where_clause}) {
         id
-        txHash
-        blockNumber
-        timestamp
-        chainId
         tags
         logicRefs
+        evmTransaction {
+          id
+          txHash
+          blockNumber
+          timestamp
+          chainId
+          from
+          value
+          gasPrice
+          gas
+          gasUsed
+        }
       }
     }
     """
@@ -174,10 +179,11 @@ defmodule AnomaExplorer.Indexer.GraphQL do
   end
 
   defp build_transaction_where(opts) do
+    # Transaction filters now reference evmTransaction for EVM-specific fields
     []
-    |> QueryBuilder.add_ilike_filter(opts, :tx_hash, :txHash)
-    |> QueryBuilder.add_chain_id_filter(opts)
-    |> QueryBuilder.add_block_range_filters(opts)
+    |> QueryBuilder.add_nested_ilike_filter(opts, :tx_hash, :evmTransaction, :txHash)
+    |> QueryBuilder.add_nested_chain_id_filter(opts, :evmTransaction)
+    |> QueryBuilder.add_nested_block_range_filters(opts, :evmTransaction)
     |> QueryBuilder.add_ilike_filter(opts, :contract_address, :contractAddress)
     |> QueryBuilder.build_where()
   end
@@ -191,19 +197,26 @@ defmodule AnomaExplorer.Indexer.GraphQL do
     query {
       Transaction(where: {id: {_eq: "#{id}"}}) {
         id
-        txHash
-        blockNumber
-        timestamp
-        chainId
         contractAddress
         tags
         logicRefs
+        evmTransaction {
+          id
+          txHash
+          blockNumber
+          timestamp
+          chainId
+          from
+          value
+          gasPrice
+          gas
+          gasUsed
+        }
         resources {
           id
           tag
           isConsumed
           logicRef
-          quantity
           decodingStatus
         }
         actions {
@@ -261,11 +274,12 @@ defmodule AnomaExplorer.Indexer.GraphQL do
         blockNumber
         chainId
         logicRef
-        quantity
         decodingStatus
         transaction {
           id
-          txHash
+          evmTransaction {
+            txHash
+          }
         }
       }
     }
@@ -309,20 +323,22 @@ defmodule AnomaExplorer.Indexer.GraphQL do
         blockNumber
         chainId
         logicRef
-        labelRef
-        valueRef
-        nullifierKeyCommitment
-        nonce
-        randSeed
-        quantity
-        ephemeral
         rawBlob
         decodingStatus
         decodingError
         transaction {
           id
-          txHash
-          blockNumber
+          evmTransaction {
+            txHash
+            blockNumber
+          }
+        }
+        payloads {
+          id
+          kind
+          tag
+          index
+          blob
         }
       }
     }
@@ -373,7 +389,9 @@ defmodule AnomaExplorer.Indexer.GraphQL do
         timestamp
         transaction {
           id
-          txHash
+          evmTransaction {
+            txHash
+          }
         }
       }
     }
@@ -416,8 +434,10 @@ defmodule AnomaExplorer.Indexer.GraphQL do
         timestamp
         transaction {
           id
-          txHash
-          blockNumber
+          evmTransaction {
+            txHash
+            blockNumber
+          }
         }
         complianceUnits {
           id
@@ -432,7 +452,7 @@ defmodule AnomaExplorer.Indexer.GraphQL do
           id
           tag
           isConsumed
-          verifyingKey
+          logicRef
         }
       }
     }
@@ -490,7 +510,9 @@ defmodule AnomaExplorer.Indexer.GraphQL do
           timestamp
           transaction {
             id
-            txHash
+            evmTransaction {
+              txHash
+            }
           }
         }
       }
@@ -562,7 +584,9 @@ defmodule AnomaExplorer.Indexer.GraphQL do
           timestamp
           transaction {
             id
-            txHash
+            evmTransaction {
+              txHash
+            }
           }
         }
       }
@@ -592,7 +616,7 @@ defmodule AnomaExplorer.Indexer.GraphQL do
     * `:offset` - Number of logic inputs to skip (default: 0)
     * `:tag` - Filter by tag (partial match)
     * `:is_consumed` - Filter by consumed status
-    * `:verifying_key` - Filter by verifying key (partial match)
+    * `:logic_ref` - Filter by logic ref (partial match)
   """
   @spec list_logic_inputs(keyword()) :: {:ok, [map()]} | {:error, term()}
   def list_logic_inputs(opts \\ []) do
@@ -609,7 +633,7 @@ defmodule AnomaExplorer.Indexer.GraphQL do
         index
         tag
         isConsumed
-        verifyingKey
+        logicRef
         applicationPayloadCount
         discoveryPayloadCount
         externalPayloadCount
@@ -621,7 +645,9 @@ defmodule AnomaExplorer.Indexer.GraphQL do
           timestamp
           transaction {
             id
-            txHash
+            evmTransaction {
+              txHash
+            }
           }
         }
         resource {
@@ -648,7 +674,7 @@ defmodule AnomaExplorer.Indexer.GraphQL do
     []
     |> QueryBuilder.add_ilike_filter(opts, :tag, :tag)
     |> QueryBuilder.add_bool_filter(opts, :is_consumed, :isConsumed)
-    |> QueryBuilder.add_ilike_filter(opts, :verifying_key, :verifyingKey)
+    |> QueryBuilder.add_ilike_filter(opts, :logic_ref, :logicRef)
     |> QueryBuilder.build_where()
   end
 
@@ -664,7 +690,7 @@ defmodule AnomaExplorer.Indexer.GraphQL do
         index
         tag
         isConsumed
-        verifyingKey
+        logicRef
         proof
         applicationPayloadCount
         discoveryPayloadCount
@@ -678,7 +704,9 @@ defmodule AnomaExplorer.Indexer.GraphQL do
           timestamp
           transaction {
             id
-            txHash
+            evmTransaction {
+              txHash
+            }
           }
         }
         resource {
@@ -830,7 +858,9 @@ defmodule AnomaExplorer.Indexer.GraphQL do
           timestamp
           transaction {
             id
-            txHash
+            evmTransaction {
+              txHash
+            }
           }
         }
       }
@@ -889,7 +919,9 @@ defmodule AnomaExplorer.Indexer.GraphQL do
           timestamp
           transaction {
             id
-            txHash
+            evmTransaction {
+              txHash
+            }
           }
         }
       }
