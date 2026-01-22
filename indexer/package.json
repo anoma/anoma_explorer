@@ -6,9 +6,9 @@
     "clean": "tsc --clean",
     "build": "tsc --build",
     "watch": "tsc --watch",
-    "codegen": "envio codegen",
-    "dev": "envio dev",
-    "start": "envio start",
+    "codegen": "pnpm envio codegen",
+    "dev": "pnpm envio dev",
+    "start": "pnpm envio start",
     "test": "ts-mocha --timeout 10000 test/**/*.test.ts"
   },
   "devDependencies": {
@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "envio": "^2.32.3",
-    "viem": "^2.44.4"
+    "viem": "^2.45.0"
   },
   "optionalDependencies": {
     "generated": "link:generated"

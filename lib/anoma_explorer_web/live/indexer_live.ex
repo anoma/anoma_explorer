@@ -37,6 +37,7 @@ defmodule AnomaExplorerWeb.IndexerLive do
     end
   end
 
+  @impl true
   def handle_event("update_url", %{"url" => url}, socket) do
     # Cancel any pending auto-test timer
     if socket.assigns.auto_test_timer do
@@ -119,6 +120,7 @@ defmodule AnomaExplorerWeb.IndexerLive do
   @impl true
   def handle_info({:settings_changed, _}, socket), do: {:noreply, socket}
 
+  # Admin authorization info messages
   def handle_info(:admin_check_expiration, socket) do
     case AdminAuth.handle_info(:admin_check_expiration, socket) do
       {:handled, socket} -> {:noreply, socket}

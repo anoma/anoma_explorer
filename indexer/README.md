@@ -31,14 +31,6 @@ pnpm build
 
 ## GraphQL API
 
-Default GraphQL endpoint:
-
-```text
-https://indexer.dev.hyperindex.xyz/d60d83b/v1/graphql
-```
-
-You can point the tooling to a different endpoint via environment variables (see Testing).
-
 ## Example Queries
 
 ### Entity sample (health check)
