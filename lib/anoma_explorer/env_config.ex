@@ -98,6 +98,16 @@ defmodule AnomaExplorer.EnvConfig do
       default: "2000",
       secret: false
     },
+    # Envio Indexer
+    %{
+      name: "ENVIO_GRAPHQL_URL",
+      description: "Envio Hyperindex GraphQL endpoint URL",
+      required: false,
+      env: :all,
+      category: :indexer,
+      default: nil,
+      secret: false
+    },
     # Etherscan API
     %{
       name: "ETHERSCAN_API_KEY",
@@ -189,15 +199,20 @@ defmodule AnomaExplorer.EnvConfig do
       description: "Configuration for blockchain data ingestion via Alchemy",
       order: 1
     },
+    indexer: %{
+      title: "Envio Indexer",
+      description: "Envio Hyperindex GraphQL endpoint for indexed blockchain data",
+      order: 2
+    },
     etherscan: %{
       title: "Etherscan API",
       description: "Contract verification and chain explorer integration",
-      order: 2
+      order: 3
     },
     phoenix: %{
       title: "Phoenix Application",
       description: "Web server and database configuration",
-      order: 3
+      order: 4
     }
   }
 

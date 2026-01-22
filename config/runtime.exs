@@ -23,6 +23,11 @@ end
 config :anoma_explorer, AnomaExplorerWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+# Envio Hyperindex GraphQL endpoint for indexed blockchain data
+if envio_graphql_url = System.get_env("ENVIO_GRAPHQL_URL") do
+  config :anoma_explorer, :envio_graphql_url, envio_graphql_url
+end
+
 # Chain explorer API key for contract verification
 # Etherscan V2 API uses a single key for all supported chains
 if etherscan_api_key = System.get_env("ETHERSCAN_API_KEY") do
