@@ -22,6 +22,10 @@ defmodule AnomaExplorer.Indexer.Client do
   """
   @spec configured?() :: boolean()
   def configured? do
-    graphql_url() != nil && graphql_url() != ""
+    case graphql_url() do
+      nil -> false
+      "" -> false
+      _url -> true
+    end
   end
 end
