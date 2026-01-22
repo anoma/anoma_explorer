@@ -19,7 +19,8 @@ defmodule AnomaExplorer.EnvConfig do
     # Database Configuration
     %{
       name: "DATABASE_URL",
-      description: "PostgreSQL database connection URL (postgresql://user:password@host:port/database)",
+      description:
+        "PostgreSQL database connection URL (postgresql://user:password@host:port/database)",
       required: true,
       env: :prod,
       category: :database,
@@ -47,7 +48,8 @@ defmodule AnomaExplorer.EnvConfig do
     # Phoenix Configuration
     %{
       name: "SECRET_KEY_BASE",
-      description: "Secret key for signing/encrypting cookies and sessions (generate with: mix phx.gen.secret)",
+      description:
+        "Secret key for signing/encrypting cookies and sessions (generate with: mix phx.gen.secret)",
       required: true,
       env: :prod,
       category: :phoenix,
@@ -102,7 +104,8 @@ defmodule AnomaExplorer.EnvConfig do
     },
     %{
       name: "ETHERSCAN_API_KEY",
-      description: "Etherscan V2 API key for contract verification (single key works for all supported chains)",
+      description:
+        "Etherscan V2 API key for contract verification (single key works for all supported chains)",
       required: false,
       env: :all,
       category: :services,

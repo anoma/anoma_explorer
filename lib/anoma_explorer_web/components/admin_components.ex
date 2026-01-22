@@ -36,7 +36,9 @@ defmodule AnomaExplorerWeb.AdminComponents do
   """
   attr :authorized, :boolean, required: true
   attr :class, :string, default: ""
-  attr :rest, :global, include: ~w(phx-click phx-value-id phx-value-protocol-id data-confirm disabled type)
+
+  attr :rest, :global,
+    include: ~w(phx-click phx-value-id phx-value-protocol-id data-confirm disabled type)
 
   slot :inner_block, required: true
 
@@ -90,8 +92,7 @@ defmodule AnomaExplorerWeb.AdminComponents do
     >
       <:title>
         <span class="flex items-center gap-2">
-          <.icon name="hero-lock-closed" class="w-5 h-5" />
-          Admin Authorization Required
+          <.icon name="hero-lock-closed" class="w-5 h-5" /> Admin Authorization Required
         </span>
       </:title>
       <p class="text-sm text-base-content/70 mb-4">
@@ -175,11 +176,7 @@ defmodule AnomaExplorerWeb.AdminComponents do
           <.icon name="hero-lock-open" class="w-3 h-3" />
           <span>Admin ({@remaining_minutes}m)</span>
         </div>
-        <button
-          phx-click="admin_logout"
-          class="btn btn-ghost btn-xs"
-          title="Revoke admin access"
-        >
+        <button phx-click="admin_logout" class="btn btn-ghost btn-xs" title="Revoke admin access">
           <.icon name="hero-lock-closed" class="w-3 h-3" />
         </button>
       <% else %>

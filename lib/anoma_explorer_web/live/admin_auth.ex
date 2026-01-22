@@ -89,7 +89,9 @@ defmodule AnomaExplorerWeb.AdminAuth do
   """
   @spec get_timeout_ms() :: integer()
   def get_timeout_ms do
-    minutes = Application.get_env(:anoma_explorer, :admin_timeout_minutes, @default_timeout_minutes)
+    minutes =
+      Application.get_env(:anoma_explorer, :admin_timeout_minutes, @default_timeout_minutes)
+
     minutes * 60 * 1000
   end
 
