@@ -24,6 +24,7 @@ defmodule AnomaExplorer.Indexer.Networks do
       explorer: "https://goerli-optimism.etherscan.io"
     },
     8453 => %{name: "Base", short: "Base", explorer: "https://basescan.org"},
+    42150 => %{name: "Arbitrum One", short: "Arb", explorer: "https://arbiscan.io"},
     42161 => %{name: "Arbitrum One", short: "Arb", explorer: "https://arbiscan.io"},
     42170 => %{name: "Arbitrum Nova", short: "Arb Nova", explorer: "https://nova.arbiscan.io"},
     43114 => %{name: "Avalanche", short: "AVAX", explorer: "https://snowtrace.io"},
@@ -64,7 +65,9 @@ defmodule AnomaExplorer.Indexer.Networks do
 
   def name(chain_id) when is_integer(chain_id) do
     case get_network_by_chain_id(chain_id) do
-      %{display_name: display_name} -> display_name
+      %{display_name: display_name} ->
+        display_name
+
       nil ->
         case Map.get(@chain_info, chain_id) do
           %{name: name} -> name
@@ -82,7 +85,9 @@ defmodule AnomaExplorer.Indexer.Networks do
 
   def short_name(chain_id) when is_integer(chain_id) do
     case get_network_by_chain_id(chain_id) do
-      %{display_name: display_name} -> display_name
+      %{display_name: display_name} ->
+        display_name
+
       nil ->
         case Map.get(@chain_info, chain_id) do
           %{short: short} -> short
@@ -100,7 +105,9 @@ defmodule AnomaExplorer.Indexer.Networks do
 
   def explorer_url(chain_id) when is_integer(chain_id) do
     case get_network_by_chain_id(chain_id) do
-      %{explorer_url: url} when is_binary(url) and url != "" -> url
+      %{explorer_url: url} when is_binary(url) and url != "" ->
+        url
+
       _ ->
         case Map.get(@chain_info, chain_id) do
           %{explorer: url} -> url

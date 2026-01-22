@@ -75,12 +75,10 @@ protocol_adapter =
 
 IO.puts("  Protocol ID: #{protocol_adapter.id}")
 
+# Contract addresses must match indexer/config.yaml
 protocol_adapter_v1 = [
-  {"eth-sepolia", "0xc63336a48D0f60faD70ed027dFB256908bBD5e37"},
   {"eth-mainnet", "0xdd4f4F0875Da48EF6d8F32ACB890EC81F435Ff3a"},
-  {"base-sepolia", "0x212f275c6dD4829cd84ABDF767b0Df4A9CB9ef60"},
-  {"base-mainnet", "0x212f275c6dD4829cd84ABDF767b0Df4A9CB9ef60"},
-  {"optimism-mainnet", "0x212f275c6dD4829cd84ABDF767b0Df4A9CB9ef60"},
+  {"eth-sepolia", "0xc63336a48D0f60faD70ed027dFB256908bBD5e37"},
   {"arb-mainnet", "0x212f275c6dD4829cd84ABDF767b0Df4A9CB9ef60"}
 ]
 
