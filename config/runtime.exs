@@ -68,6 +68,15 @@ if config_env() == :prod do
 
   config :anoma_explorer, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
+  # Build check_origin list - include configured host and common patterns
+  check_origin =
+    if host == "example.com" do
+      # No PHX_HOST set - use permissive mode for the connection's host
+      :conn
+    else
+      ["https://#{host}", "https://www.#{host}"]
+    end
+
   config :anoma_explorer, AnomaExplorerWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
     http: [
@@ -77,7 +86,7 @@ if config_env() == :prod do
       # for details about using IPv6 vs IPv4 and loopback vs public addresses.
       ip: {0, 0, 0, 0, 0, 0, 0, 0}
     ],
-    check_origin: ["https://#{host}", "https://www.#{host}"],
+    check_origin: check_origin,
     secret_key_base: secret_key_base
 
   # ## SSL Support
