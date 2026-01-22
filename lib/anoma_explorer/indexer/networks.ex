@@ -1,8 +1,14 @@
 defmodule AnomaExplorer.Indexer.Networks do
   @moduledoc """
   Network name mappings and block explorer URLs for chain IDs.
+
+  This module provides functions to look up network information either from
+  the database (preferred) or from a hardcoded fallback map.
   """
 
+  alias AnomaExplorer.Settings
+
+  # Fallback chain info for networks not in the database
   @chain_info %{
     1 => %{name: "Ethereum", short: "ETH", explorer: "https://etherscan.io"},
     5 => %{name: "Goerli", short: "Goerli", explorer: "https://goerli.etherscan.io"},
@@ -51,40 +57,55 @@ defmodule AnomaExplorer.Indexer.Networks do
 
   @doc """
   Returns the display name for a chain ID.
+  First checks the database, then falls back to hardcoded info.
   """
   @spec name(integer() | nil) :: String.t()
   def name(nil), do: "Unknown"
 
   def name(chain_id) when is_integer(chain_id) do
-    case Map.get(@chain_info, chain_id) do
-      %{name: name} -> name
-      nil -> "Chain #{chain_id}"
+    case get_network_by_chain_id(chain_id) do
+      %{display_name: display_name} -> display_name
+      nil ->
+        case Map.get(@chain_info, chain_id) do
+          %{name: name} -> name
+          nil -> "Chain #{chain_id}"
+        end
     end
   end
 
   @doc """
   Returns a short name for a chain ID (for badges).
+  First checks the database, then falls back to hardcoded info.
   """
   @spec short_name(integer() | nil) :: String.t()
   def short_name(nil), do: "?"
 
   def short_name(chain_id) when is_integer(chain_id) do
-    case Map.get(@chain_info, chain_id) do
-      %{short: short} -> short
-      nil -> "#{chain_id}"
+    case get_network_by_chain_id(chain_id) do
+      %{display_name: display_name} -> display_name
+      nil ->
+        case Map.get(@chain_info, chain_id) do
+          %{short: short} -> short
+          nil -> "#{chain_id}"
+        end
     end
   end
 
   @doc """
   Returns the block explorer URL for a chain ID.
+  First checks the database, then falls back to hardcoded info.
   """
   @spec explorer_url(integer() | nil) :: String.t() | nil
   def explorer_url(nil), do: nil
 
   def explorer_url(chain_id) when is_integer(chain_id) do
-    case Map.get(@chain_info, chain_id) do
-      %{explorer: url} -> url
-      nil -> nil
+    case get_network_by_chain_id(chain_id) do
+      %{explorer_url: url} when is_binary(url) and url != "" -> url
+      _ ->
+        case Map.get(@chain_info, chain_id) do
+          %{explorer: url} -> url
+          nil -> nil
+        end
     end
   end
 
@@ -146,11 +167,20 @@ defmodule AnomaExplorer.Indexer.Networks do
   @doc """
   Returns a list of all known chains for dropdown selects.
   Returns a list of {chain_id, name} tuples sorted by name.
+
+  Fetches active networks from the database. Only networks with a chain_id are included.
   """
   @spec list_chains() :: [{integer(), String.t()}]
   def list_chains do
-    @chain_info
-    |> Enum.map(fn {chain_id, %{name: name}} -> {chain_id, name} end)
+    Settings.list_networks(active: true)
+    |> Enum.filter(fn network -> network.chain_id != nil end)
+    |> Enum.map(fn network -> {network.chain_id, network.display_name} end)
     |> Enum.sort_by(fn {_id, name} -> name end)
+  end
+
+  # Private helper to look up a network by chain_id from the database
+  defp get_network_by_chain_id(chain_id) do
+    Settings.list_networks()
+    |> Enum.find(fn network -> network.chain_id == chain_id end)
   end
 end
