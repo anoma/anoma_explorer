@@ -30,11 +30,9 @@ defmodule H do
 
   # Known Anoma Protocol Adapter addresses (must match indexer/config.yaml)
   @protocol_adapters %{
-    "eth-mainnet" => "0xdd4f4F0875Da48EF6d8F32ACB890EC81F435Ff3a",
-    "eth-sepolia" => "0x2E539c08414DCaBF06305d4095e11096F3d7e612",
-    "arb-mainnet" => "0x212f275c6dD4829cd84ABDF767b0Df4A9CB9ef60",
-    "base-sepolia" => "0x9ED43C229480659bF6B6607C46d7B96c6D760cBB",
-    "base-mainnet" => "0x9ED43C229480659bF6B6607C46d7B96c6D760cBB"
+    "arb-mainnet" => "0x9ED43C229480659bF6B6607C46d7B96c6D760cBB",
+    "base-mainnet" => "0x9ED43C229480659bF6B6607C46d7B96c6D760cBB",
+    "optimism-mainnet" => "0x9ED43C229480659bF6B6607C46d7B96c6D760cBB"
   }
 
   @doc "Get the configured contract address (from env)"
