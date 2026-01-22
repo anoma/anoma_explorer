@@ -29,6 +29,7 @@ defmodule AnomaExplorerWeb.CommitmentsLive do
       |> assign(:has_more, true)
       |> assign(:configured, Client.configured?())
       |> assign(:filters, @default_filters)
+      |> assign(:filter_version, 0)
       |> assign(:show_filters, false)
       |> assign(:chains, Networks.list_chains())
 
@@ -63,9 +64,13 @@ defmodule AnomaExplorerWeb.CommitmentsLive do
 
   @impl true
   def handle_event("clear_filters", _params, socket) do
+    # Increment filter_version to force form re-render and clear input values
+    version = Map.get(socket.assigns, :filter_version, 0) + 1
+
     socket =
       socket
       |> assign(:filters, @default_filters)
+      |> assign(:filter_version, version)
       |> assign(:page, 0)
       |> assign(:loading, true)
       |> load_commitments()
@@ -210,7 +215,7 @@ defmodule AnomaExplorerWeb.CommitmentsLive do
 
         <div class="stat-card">
           <.filter_toggle show_filters={@show_filters} filter_count={active_filter_count(@filters)} />
-          <.filter_form :if={@show_filters} filters={@filters} chains={@chains} />
+          <.filter_form :if={@show_filters} filters={@filters} chains={@chains} filter_version={@filter_version} />
 
           <%= if @loading and @commitments == [] do %>
             <.loading_skeleton />
@@ -244,7 +249,7 @@ defmodule AnomaExplorerWeb.CommitmentsLive do
 
   defp filter_form(assigns) do
     ~H"""
-    <form phx-submit="apply_filters" class="mb-6 p-4 bg-base-200/50 rounded-lg">
+    <form id={"filter-form-#{@filter_version}"} phx-submit="apply_filters" class="mb-6 p-4 bg-base-200/50 rounded-lg">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div>
           <label class="text-xs text-base-content/60 uppercase tracking-wide mb-1 block">Root</label>
