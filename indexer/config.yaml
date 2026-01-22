@@ -15,7 +15,7 @@ field_selection:
   transaction_fields:
     - "hash"
 networks:
-  - id: 42150
+  - id: 42161
     start_block: 0
     contracts:
     - name: ProtocolAdapter
