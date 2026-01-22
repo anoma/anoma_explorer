@@ -176,9 +176,14 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
           |> assign(:error, "Indexer endpoint not configured")
           |> assign(:loading, false)
 
-        {:error, {:graphql_error, errors}} ->
+        {:error, {:http_error, status, body}} ->
           socket
-          |> assign(:error, format_graphql_errors(errors))
+          |> assign(:error, "HTTP error #{status}: #{String.slice(body, 0, 200)}")
+          |> assign(:loading, false)
+
+        {:error, {:decode_error, reason}} ->
+          socket
+          |> assign(:error, "Failed to decode response: #{inspect(reason)}")
           |> assign(:loading, false)
 
         {:error, {:connection_error, reason}} ->
@@ -194,17 +199,6 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
 
     {:noreply, socket}
   end
-
-  defp format_graphql_errors(errors) when is_list(errors) do
-    errors
-    |> Enum.map(fn
-      %{"message" => msg} -> msg
-      error -> inspect(error)
-    end)
-    |> Enum.join("\n")
-  end
-
-  defp format_graphql_errors(errors), do: inspect(errors)
 
   # Block explorer URLs by chain ID
   @block_explorers %{
