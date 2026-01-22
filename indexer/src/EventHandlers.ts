@@ -205,14 +205,23 @@ function clearDecodedCache(txHash: string): void {
 
 ProtocolAdapter.TransactionExecuted.handler(
   async ({ event, context }: TransactionExecutedArgs) => {
-    const txId = createTransactionId(event.chainId, event.transaction.hash);
-    const txHash = event.transaction.hash;
+    // Cast transaction to access EVM fields
+    const tx = event.transaction as {
+      hash: string;
+      input?: string;
+      from?: string;
+      gas?: bigint;
+      gasPrice?: bigint;
+      gasUsed?: bigint;
+      value?: bigint;
+    };
+
+    const txId = createTransactionId(event.chainId, tx.hash);
+    const txHash = tx.hash;
 
     // Try to decode calldata for proofs
     // Note: event.transaction.input is available because we added "input" to field_selection
-    const txInput = (event.transaction as { hash: string; input?: string })
-      .input;
-    const decoded = getDecodedTransaction(txHash, txInput);
+    const decoded = getDecodedTransaction(txHash, tx.input);
 
     // Create Transaction entity (Anoma Transaction)
     const txEntity: Transaction = {
@@ -227,6 +236,12 @@ ProtocolAdapter.TransactionExecuted.handler(
       logicRefs: event.params.logicRefs,
       deltaProof: decoded?.deltaProof,
       aggregationProof: decoded?.aggregationProof,
+      // EVM transaction fields
+      from: tx.from,
+      gas: tx.gas,
+      gasPrice: tx.gasPrice,
+      gasUsed: tx.gasUsed,
+      value: tx.value,
     };
 
     context.Transaction.set(txEntity);

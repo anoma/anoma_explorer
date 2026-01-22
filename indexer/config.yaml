@@ -14,6 +14,12 @@ contracts:
 field_selection:
   transaction_fields:
     - "hash"
+    - "from"
+    - "gas"
+    - "gasPrice"
+    - "gasUsed"
+    - "value"
+    - "input"
 networks:
   - id: 42161
     start_block: 0
