@@ -2,6 +2,24 @@
 # Entities follow Anoma specification from pa-evm/contracts/src/Types.sol
 
 # ============================================
+# Enums
+# ============================================
+
+# Status of resource blob decoding
+enum DecodingStatus {
+  pending   # Blob not yet received or processed
+  raw       # Blob received but format is application-specific
+  success   # Blob successfully decoded
+  failed    # Blob decoding failed
+}
+
+# Blob deletion criterion from PA-EVM Logic.DeletionCriterion
+enum DeletionCriterion {
+  immediately  # Blob should be deleted after processing (value: 0)
+  never        # Blob should be persisted permanently (value: 1)
+}
+
+# ============================================
 # Core Anoma Types
 # ============================================
 
@@ -121,7 +139,7 @@ type Resource {
 
   # Raw blob data from ResourcePayload event (if emitted)
   rawBlob: String!
-  decodingStatus: String! # "pending" | "raw" | "success" | "failed"
+  decodingStatus: DecodingStatus!
   decodingError: String
 
   # Relationships
@@ -143,7 +161,7 @@ type DiscoveryPayload {
   tag: String!
   index: Int!
   blob: String!
-  deletionCriterion: Int
+  deletionCriterion: DeletionCriterion
   blockNumber: Int!
   chainId: Int!
   timestamp: Int!
@@ -157,7 +175,7 @@ type ExternalPayload {
   tag: String!
   index: Int!
   blob: String!
-  deletionCriterion: Int
+  deletionCriterion: DeletionCriterion
   blockNumber: Int!
   chainId: Int!
   timestamp: Int!
@@ -171,7 +189,7 @@ type ApplicationPayload {
   tag: String!
   index: Int!
   blob: String!
-  deletionCriterion: Int
+  deletionCriterion: DeletionCriterion
   blockNumber: Int!
   chainId: Int!
   timestamp: Int!
