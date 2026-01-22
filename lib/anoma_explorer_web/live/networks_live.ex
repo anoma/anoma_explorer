@@ -51,8 +51,8 @@ defmodule AnomaExplorerWeb.NetworksLive do
                     <th>Name</th>
                     <th>Display Name</th>
                     <th>Chain ID</th>
-                    <th>Explorer URL</th>
-                    <th>RPC URL</th>
+                    <th class="hidden lg:table-cell">Explorer URL</th>
+                    <th class="hidden xl:table-cell">RPC URL</th>
                     <th>Type</th>
                     <th>Status</th>
                     <th></th>
@@ -72,7 +72,7 @@ defmodule AnomaExplorerWeb.NetworksLive do
                           <span class="text-base-content/40">-</span>
                         <% end %>
                       </td>
-                      <td>
+                      <td class="hidden lg:table-cell">
                         <%= if network.explorer_url do %>
                           <a
                             href={network.explorer_url}
@@ -87,7 +87,7 @@ defmodule AnomaExplorerWeb.NetworksLive do
                           <span class="text-base-content/40">-</span>
                         <% end %>
                       </td>
-                      <td>
+                      <td class="hidden xl:table-cell">
                         <%= if network.rpc_url do %>
                           <span
                             class="text-sm font-mono text-base-content/70 truncate max-w-[200px] inline-block"
