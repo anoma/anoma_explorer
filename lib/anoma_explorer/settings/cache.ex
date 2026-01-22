@@ -96,6 +96,15 @@ defmodule AnomaExplorer.Settings.Cache do
   end
 
   @doc """
+  Removes a protocol name index from the cache.
+  """
+  @spec delete_protocol_index(String.t()) :: :ok
+  def delete_protocol_index(name) do
+    :ets.delete(@table_name, {:protocol_name, name})
+    :ok
+  end
+
+  @doc """
   Deletes an entry from cache.
   """
   @spec delete(integer(), String.t(), String.t(), String.t()) :: :ok

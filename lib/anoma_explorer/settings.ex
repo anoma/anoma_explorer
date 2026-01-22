@@ -62,6 +62,7 @@ defmodule AnomaExplorer.Settings do
           {:ok, Protocol.t()} | {:error, Ecto.Changeset.t()}
   def delete_protocol(%Protocol{} = protocol) do
     Repo.delete(protocol)
+    |> tap_ok(fn p -> Cache.delete_protocol_index(p.name) end)
     |> tap_ok(&broadcast_change({:protocol_deleted, &1}))
   end
 
