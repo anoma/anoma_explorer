@@ -620,6 +620,7 @@ ProtocolAdapter.DiscoveryPayload.handler(
 ProtocolAdapter.ExternalPayload.handler(
   async ({ event, context }: ExternalPayloadArgs) => {
     const eventId = createEventId(event);
+    const resourceId = createResourceId(event.chainId, event.params.tag);
 
     const entity: ExternalPayload = {
       id: eventId,
@@ -630,6 +631,7 @@ ProtocolAdapter.ExternalPayload.handler(
       blockNumber: event.block.number,
       chainId: event.chainId,
       timestamp: event.block.timestamp,
+      resource_id: resourceId,
     };
 
     context.ExternalPayload.set(entity);

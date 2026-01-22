@@ -129,6 +129,7 @@ type Resource {
   logicInput: LogicInput
   complianceUnit: ComplianceUnit # The compliance unit this resource belongs to (use isConsumed to determine side)
   discoveryPayloads: [DiscoveryPayload!]! @derivedFrom(field: "resource")
+  externalPayloads: [ExternalPayload!]! @derivedFrom(field: "resource")
   applicationPayloads: [ApplicationPayload!]! @derivedFrom(field: "resource")
 }
 
@@ -160,6 +161,8 @@ type ExternalPayload {
   blockNumber: Int!
   chainId: Int!
   timestamp: Int!
+
+  resource: Resource # Link to parent resource by tag
 }
 
 # ApplicationPayload - Application-specific data
