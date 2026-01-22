@@ -10,7 +10,7 @@
 type Transaction {
   id: ID!
   blockNumber: Int!
-  logIndex: Int!
+  logIndex: Int! # EVM event log index of the TransactionExecuted event
   txHash: String!
   timestamp: Int!
   chainId: Int!
