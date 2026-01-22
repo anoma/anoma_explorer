@@ -10,7 +10,7 @@ defmodule AnomaExplorer.Indexer.GraphQL do
 
   alias AnomaExplorer.Settings
   alias AnomaExplorer.Indexer.Cache
-  alias AnomaExplorer.Utils.Formatting
+  alias AnomaExplorer.Indexer.GraphQL.QueryBuilder
 
   # Default timeout values
   @default_timeout 15_000
@@ -174,47 +174,12 @@ defmodule AnomaExplorer.Indexer.GraphQL do
   end
 
   defp build_transaction_where(opts) do
-    conditions = []
-
-    conditions =
-      case Keyword.get(opts, :tx_hash) do
-        nil -> conditions
-        "" -> conditions
-        hash -> conditions ++ ["txHash: {_ilike: \"%#{Formatting.escape_string(hash)}%\"}"]
-      end
-
-    conditions =
-      case Keyword.get(opts, :chain_id) do
-        nil -> conditions
-        "" -> conditions
-        id when is_integer(id) -> conditions ++ ["chainId: {_eq: #{id}}"]
-        id -> conditions ++ ["chainId: {_eq: #{id}}"]
-      end
-
-    conditions =
-      case Keyword.get(opts, :block_min) do
-        nil -> conditions
-        "" -> conditions
-        min when is_integer(min) -> conditions ++ ["blockNumber: {_gte: #{min}}"]
-        min -> conditions ++ ["blockNumber: {_gte: #{min}}"]
-      end
-
-    conditions =
-      case Keyword.get(opts, :block_max) do
-        nil -> conditions
-        "" -> conditions
-        max when is_integer(max) -> conditions ++ ["blockNumber: {_lte: #{max}}"]
-        max -> conditions ++ ["blockNumber: {_lte: #{max}}"]
-      end
-
-    conditions =
-      case Keyword.get(opts, :contract_address) do
-        nil -> conditions
-        "" -> conditions
-        addr -> conditions ++ ["contractAddress: {_ilike: \"%#{Formatting.escape_string(addr)}%\"}"]
-      end
-
-    Enum.join(conditions, ", ")
+    []
+    |> QueryBuilder.add_ilike_filter(opts, :tx_hash, :txHash)
+    |> QueryBuilder.add_chain_id_filter(opts)
+    |> QueryBuilder.add_block_range_filters(opts)
+    |> QueryBuilder.add_ilike_filter(opts, :contract_address, :contractAddress)
+    |> QueryBuilder.build_where()
   end
 
   @doc """
@@ -319,61 +284,14 @@ defmodule AnomaExplorer.Indexer.GraphQL do
   end
 
   defp build_resource_where(opts) do
-    conditions = []
-
-    conditions =
-      case Keyword.get(opts, :is_consumed) do
-        nil -> conditions
-        true -> conditions ++ ["isConsumed: {_eq: true}"]
-        false -> conditions ++ ["isConsumed: {_eq: false}"]
-      end
-
-    conditions =
-      case Keyword.get(opts, :tag) do
-        nil -> conditions
-        "" -> conditions
-        tag -> conditions ++ ["tag: {_ilike: \"%#{Formatting.escape_string(tag)}%\"}"]
-      end
-
-    conditions =
-      case Keyword.get(opts, :logic_ref) do
-        nil -> conditions
-        "" -> conditions
-        ref -> conditions ++ ["logicRef: {_ilike: \"%#{Formatting.escape_string(ref)}%\"}"]
-      end
-
-    conditions =
-      case Keyword.get(opts, :chain_id) do
-        nil -> conditions
-        "" -> conditions
-        id when is_integer(id) -> conditions ++ ["chainId: {_eq: #{id}}"]
-        id -> conditions ++ ["chainId: {_eq: #{id}}"]
-      end
-
-    conditions =
-      case Keyword.get(opts, :decoding_status) do
-        nil -> conditions
-        "" -> conditions
-        status -> conditions ++ ["decodingStatus: {_eq: \"#{Formatting.escape_string(status)}\"}"]
-      end
-
-    conditions =
-      case Keyword.get(opts, :block_min) do
-        nil -> conditions
-        "" -> conditions
-        min when is_integer(min) -> conditions ++ ["blockNumber: {_gte: #{min}}"]
-        min -> conditions ++ ["blockNumber: {_gte: #{min}}"]
-      end
-
-    conditions =
-      case Keyword.get(opts, :block_max) do
-        nil -> conditions
-        "" -> conditions
-        max when is_integer(max) -> conditions ++ ["blockNumber: {_lte: #{max}}"]
-        max -> conditions ++ ["blockNumber: {_lte: #{max}}"]
-      end
-
-    Enum.join(conditions, ", ")
+    []
+    |> QueryBuilder.add_bool_filter(opts, :is_consumed, :isConsumed)
+    |> QueryBuilder.add_ilike_filter(opts, :tag, :tag)
+    |> QueryBuilder.add_ilike_filter(opts, :logic_ref, :logicRef)
+    |> QueryBuilder.add_chain_id_filter(opts)
+    |> QueryBuilder.add_eq_filter(opts, :decoding_status, :decodingStatus)
+    |> QueryBuilder.add_block_range_filters(opts)
+    |> QueryBuilder.build_where()
   end
 
   @doc """
@@ -474,40 +392,11 @@ defmodule AnomaExplorer.Indexer.GraphQL do
   end
 
   defp build_action_where(opts) do
-    conditions = []
-
-    conditions =
-      case Keyword.get(opts, :action_tree_root) do
-        nil -> conditions
-        "" -> conditions
-        root -> conditions ++ ["actionTreeRoot: {_ilike: \"%#{Formatting.escape_string(root)}%\"}"]
-      end
-
-    conditions =
-      case Keyword.get(opts, :chain_id) do
-        nil -> conditions
-        "" -> conditions
-        id when is_integer(id) -> conditions ++ ["chainId: {_eq: #{id}}"]
-        id -> conditions ++ ["chainId: {_eq: #{id}}"]
-      end
-
-    conditions =
-      case Keyword.get(opts, :block_min) do
-        nil -> conditions
-        "" -> conditions
-        min when is_integer(min) -> conditions ++ ["blockNumber: {_gte: #{min}}"]
-        min -> conditions ++ ["blockNumber: {_gte: #{min}}"]
-      end
-
-    conditions =
-      case Keyword.get(opts, :block_max) do
-        nil -> conditions
-        "" -> conditions
-        max when is_integer(max) -> conditions ++ ["blockNumber: {_lte: #{max}}"]
-        max -> conditions ++ ["blockNumber: {_lte: #{max}}"]
-      end
-
-    Enum.join(conditions, ", ")
+    []
+    |> QueryBuilder.add_ilike_filter(opts, :action_tree_root, :actionTreeRoot)
+    |> QueryBuilder.add_chain_id_filter(opts)
+    |> QueryBuilder.add_block_range_filters(opts)
+    |> QueryBuilder.build_where()
   end
 
   @doc """
@@ -621,38 +510,20 @@ defmodule AnomaExplorer.Indexer.GraphQL do
   end
 
   defp build_compliance_where(opts) do
-    conditions = []
-
     conditions =
-      case Keyword.get(opts, :nullifier) do
-        nil -> conditions
-        "" -> conditions
-        nf -> conditions ++ ["consumedNullifier: {_ilike: \"%#{Formatting.escape_string(nf)}%\"}"]
-      end
+      []
+      |> QueryBuilder.add_ilike_filter(opts, :nullifier, :consumedNullifier)
+      |> QueryBuilder.add_ilike_filter(opts, :commitment, :createdCommitment)
 
-    conditions =
-      case Keyword.get(opts, :commitment) do
-        nil -> conditions
-        "" -> conditions
-        cm -> conditions ++ ["createdCommitment: {_ilike: \"%#{Formatting.escape_string(cm)}%\"}"]
-      end
-
+    # Handle logic_ref with OR clause (matches consumed or created)
     conditions =
       case Keyword.get(opts, :logic_ref) do
-        nil ->
-          conditions
-
-        "" ->
-          conditions
-
-        ref ->
-          conditions ++
-            [
-              "_or: [{consumedLogicRef: {_ilike: \"%#{Formatting.escape_string(ref)}%\"}}, {createdLogicRef: {_ilike: \"%#{Formatting.escape_string(ref)}%\"}}]"
-            ]
+        nil -> conditions
+        "" -> conditions
+        ref -> conditions ++ [{:_or, :or, [{:consumedLogicRef, :ilike, ref}, {:createdLogicRef, :ilike, ref}]}]
       end
 
-    Enum.join(conditions, ", ")
+    QueryBuilder.build_where(conditions)
   end
 
   @doc """
@@ -774,30 +645,11 @@ defmodule AnomaExplorer.Indexer.GraphQL do
   end
 
   defp build_logic_input_where(opts) do
-    conditions = []
-
-    conditions =
-      case Keyword.get(opts, :tag) do
-        nil -> conditions
-        "" -> conditions
-        tag -> conditions ++ ["tag: {_ilike: \"%#{Formatting.escape_string(tag)}%\"}"]
-      end
-
-    conditions =
-      case Keyword.get(opts, :is_consumed) do
-        nil -> conditions
-        true -> conditions ++ ["isConsumed: {_eq: true}"]
-        false -> conditions ++ ["isConsumed: {_eq: false}"]
-      end
-
-    conditions =
-      case Keyword.get(opts, :verifying_key) do
-        nil -> conditions
-        "" -> conditions
-        key -> conditions ++ ["verifyingKey: {_ilike: \"%#{Formatting.escape_string(key)}%\"}"]
-      end
-
-    Enum.join(conditions, ", ")
+    []
+    |> QueryBuilder.add_ilike_filter(opts, :tag, :tag)
+    |> QueryBuilder.add_bool_filter(opts, :is_consumed, :isConsumed)
+    |> QueryBuilder.add_ilike_filter(opts, :verifying_key, :verifyingKey)
+    |> QueryBuilder.build_where()
   end
 
   @doc """
@@ -901,47 +753,12 @@ defmodule AnomaExplorer.Indexer.GraphQL do
   end
 
   defp build_commitment_root_where(opts) do
-    conditions = []
-
-    conditions =
-      case Keyword.get(opts, :root) do
-        nil -> conditions
-        "" -> conditions
-        root -> conditions ++ ["root: {_ilike: \"%#{Formatting.escape_string(root)}%\"}"]
-      end
-
-    conditions =
-      case Keyword.get(opts, :tx_hash) do
-        nil -> conditions
-        "" -> conditions
-        hash -> conditions ++ ["txHash: {_ilike: \"%#{Formatting.escape_string(hash)}%\"}"]
-      end
-
-    conditions =
-      case Keyword.get(opts, :chain_id) do
-        nil -> conditions
-        "" -> conditions
-        id when is_integer(id) -> conditions ++ ["chainId: {_eq: #{id}}"]
-        id -> conditions ++ ["chainId: {_eq: #{id}}"]
-      end
-
-    conditions =
-      case Keyword.get(opts, :block_min) do
-        nil -> conditions
-        "" -> conditions
-        min when is_integer(min) -> conditions ++ ["blockNumber: {_gte: #{min}}"]
-        min -> conditions ++ ["blockNumber: {_gte: #{min}}"]
-      end
-
-    conditions =
-      case Keyword.get(opts, :block_max) do
-        nil -> conditions
-        "" -> conditions
-        max when is_integer(max) -> conditions ++ ["blockNumber: {_lte: #{max}}"]
-        max -> conditions ++ ["blockNumber: {_lte: #{max}}"]
-      end
-
-    Enum.join(conditions, ", ")
+    []
+    |> QueryBuilder.add_ilike_filter(opts, :root, :root)
+    |> QueryBuilder.add_ilike_filter(opts, :tx_hash, :txHash)
+    |> QueryBuilder.add_chain_id_filter(opts)
+    |> QueryBuilder.add_block_range_filters(opts)
+    |> QueryBuilder.build_where()
   end
 
   @doc """
@@ -1033,16 +850,9 @@ defmodule AnomaExplorer.Indexer.GraphQL do
   end
 
   defp build_nullifier_where(opts) do
-    conditions = []
-
-    conditions =
-      case Keyword.get(opts, :nullifier) do
-        nil -> conditions
-        "" -> conditions
-        nf -> conditions ++ ["consumedNullifier: {_ilike: \"%#{Formatting.escape_string(nf)}%\"}"]
-      end
-
-    Enum.join(conditions, ", ")
+    []
+    |> QueryBuilder.add_ilike_filter(opts, :nullifier, :consumedNullifier)
+    |> QueryBuilder.build_where()
   end
 
   @doc """
@@ -1099,16 +909,9 @@ defmodule AnomaExplorer.Indexer.GraphQL do
   end
 
   defp build_commitment_where(opts) do
-    conditions = []
-
-    conditions =
-      case Keyword.get(opts, :commitment) do
-        nil -> conditions
-        "" -> conditions
-        cm -> conditions ++ ["createdCommitment: {_ilike: \"%#{Formatting.escape_string(cm)}%\"}"]
-      end
-
-    Enum.join(conditions, ", ")
+    []
+    |> QueryBuilder.add_ilike_filter(opts, :commitment, :createdCommitment)
+    |> QueryBuilder.build_where()
   end
 
   @doc """
