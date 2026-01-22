@@ -29,7 +29,16 @@ config :esbuild,
     args:
       ~w(js/app.js --bundle --target=es2022 --outdir=../priv/static/assets/js --external:/fonts/* --external:/images/* --alias:@=.),
     cd: Path.expand("../assets", __DIR__),
-    env: %{"NODE_PATH" => [Path.expand("../deps", __DIR__), Mix.Project.build_path()]}
+    env: %{
+      "NODE_PATH" =>
+        Enum.join(
+          [
+            Path.expand("../deps", __DIR__),
+            Path.expand("../_build/#{Mix.env()}", __DIR__)
+          ],
+          ":"
+        )
+    }
   ]
 
 # Configure tailwind (the version is required)
