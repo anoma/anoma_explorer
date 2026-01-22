@@ -157,7 +157,10 @@ defmodule AnomaExplorerWeb.LogicLive do
             <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">Block Number</div>
             <div class="flex items-center gap-2">
               <span class="font-mono">{@logic["action"]["blockNumber"]}</span>
-              <.copy_button text={to_string(@logic["action"]["blockNumber"])} tooltip="Copy block number" />
+              <.copy_button
+                text={to_string(@logic["action"]["blockNumber"])}
+                tooltip="Copy block number"
+              />
             </div>
           </div>
           <div>

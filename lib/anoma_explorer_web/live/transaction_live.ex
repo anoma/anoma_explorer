@@ -152,8 +152,13 @@ defmodule AnomaExplorerWeb.TransactionLive do
             <code class="hash-display text-sm break-all">{@tx["txHash"]}</code>
             <.copy_button text={@tx["txHash"]} />
             <%= if @tx_url do %>
-              <a href={@tx_url} target="_blank" class="btn btn-ghost btn-xs" title="View on Explorer">
-                <.icon name="hero-arrow-top-right-on-square" class="w-3 h-3" />
+              <a
+                href={@tx_url}
+                target="_blank"
+                class="btn btn-ghost shrink-0 opacity-60 hover:opacity-100"
+                title="View on Explorer"
+              >
+                <.icon name="hero-arrow-top-right-on-square" class="w-4 h-4" />
               </a>
             <% end %>
           </div>
@@ -194,10 +199,10 @@ defmodule AnomaExplorerWeb.TransactionLive do
                 <a
                   href={@contract_url}
                   target="_blank"
-                  class="btn btn-ghost btn-xs"
+                  class="btn btn-ghost shrink-0 opacity-60 hover:opacity-100"
                   title="View on Explorer"
                 >
-                  <.icon name="hero-arrow-top-right-on-square" class="w-3 h-3" />
+                  <.icon name="hero-arrow-top-right-on-square" class="w-4 h-4" />
                 </a>
               <% end %>
             </div>
