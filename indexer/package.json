@@ -2,7 +2,6 @@
   "name": "anoma-explorer-indexer",
   "version": "0.1.0",
   "description": "Envio Hyperindex indexer for Anoma Protocol Adapter events",
-  "type": "module",
   "scripts": {
     "clean": "tsc --clean",
     "build": "tsc --build",
