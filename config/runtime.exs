@@ -77,6 +77,7 @@ if config_env() == :prod do
       # for details about using IPv6 vs IPv4 and loopback vs public addresses.
       ip: {0, 0, 0, 0, 0, 0, 0, 0}
     ],
+    check_origin: ["https://#{host}", "https://www.#{host}"],
     secret_key_base: secret_key_base
 
   # ## SSL Support
