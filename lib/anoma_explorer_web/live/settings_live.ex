@@ -130,8 +130,8 @@ defmodule AnomaExplorerWeb.SettingsLive do
                       </tr>
                     </thead>
                     <tbody>
-                      <%= for address <- protocol.contract_addresses do %>
-                        <tr>
+                      <%= for address <- Enum.sort_by(protocol.contract_addresses, & &1.active, :desc) do %>
+                        <tr class={unless address.active, do: "opacity-50"}>
                           <td>
                             <%= if protocol.github_url do %>
                               <a
