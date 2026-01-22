@@ -364,7 +364,10 @@ defmodule AnomaExplorerWeb.NullifiersLive do
                 </td>
                 <td>
                   <%= if unit["action"] do %>
-                    <span class="font-mono text-sm">{unit["action"]["blockNumber"]}</span>
+                    <div class="flex items-center gap-1">
+                      <span class="font-mono text-sm">{unit["action"]["blockNumber"]}</span>
+                      <.copy_button text={to_string(unit["action"]["blockNumber"])} tooltip="Copy block number" />
+                    </div>
                   <% else %>
                     -
                   <% end %>

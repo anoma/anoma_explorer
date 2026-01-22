@@ -399,18 +399,21 @@ defmodule AnomaExplorerWeb.HomeLive do
                     </button>
                   </td>
                   <td>
-                    <%= if block_url = Networks.block_url(tx["chainId"], tx["blockNumber"]) do %>
-                      <a
-                        href={block_url}
-                        target="_blank"
-                        rel="noopener"
-                        class="font-mono text-sm link link-hover"
-                      >
-                        {tx["blockNumber"]}
-                      </a>
-                    <% else %>
-                      <span class="font-mono text-sm">{tx["blockNumber"]}</span>
-                    <% end %>
+                    <div class="flex items-center gap-1">
+                      <%= if block_url = Networks.block_url(tx["chainId"], tx["blockNumber"]) do %>
+                        <a
+                          href={block_url}
+                          target="_blank"
+                          rel="noopener"
+                          class="font-mono text-sm link link-hover"
+                        >
+                          {tx["blockNumber"]}
+                        </a>
+                      <% else %>
+                        <span class="font-mono text-sm">{tx["blockNumber"]}</span>
+                      <% end %>
+                      <.copy_button text={to_string(tx["blockNumber"])} tooltip="Copy block number" />
+                    </div>
                   </td>
                   <td>
                     <button

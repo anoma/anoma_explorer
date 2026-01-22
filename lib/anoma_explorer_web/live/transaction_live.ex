@@ -156,6 +156,7 @@ defmodule AnomaExplorerWeb.TransactionLive do
             <% else %>
               <span class="font-mono">{@tx["blockNumber"]}</span>
             <% end %>
+            <.copy_button text={to_string(@tx["blockNumber"])} tooltip="Copy block number" />
           </div>
         </div>
         <div>

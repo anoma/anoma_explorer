@@ -436,7 +436,10 @@ defmodule AnomaExplorerWeb.TransactionsLive do
                   </span>
                 </td>
                 <td>
-                  <span class="font-mono text-sm">{tx["blockNumber"]}</span>
+                  <div class="flex items-center gap-1">
+                    <span class="font-mono text-sm">{tx["blockNumber"]}</span>
+                    <.copy_button text={to_string(tx["blockNumber"])} tooltip="Copy block number" />
+                  </div>
                 </td>
                 <td>
                   <button

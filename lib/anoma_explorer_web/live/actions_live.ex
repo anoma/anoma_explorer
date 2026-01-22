@@ -389,7 +389,10 @@ defmodule AnomaExplorerWeb.ActionsLive do
                   <span class="badge badge-ghost badge-sm">{action["tagCount"]}</span>
                 </td>
                 <td>
-                  <span class="font-mono text-sm">{action["blockNumber"]}</span>
+                  <div class="flex items-center gap-1">
+                    <span class="font-mono text-sm">{action["blockNumber"]}</span>
+                    <.copy_button text={to_string(action["blockNumber"])} tooltip="Copy block number" />
+                  </div>
                 </td>
                 <td class="hidden lg:table-cell text-base-content/60 text-sm">
                   {format_timestamp(action["timestamp"])}

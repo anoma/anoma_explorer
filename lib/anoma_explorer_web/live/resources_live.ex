@@ -491,8 +491,11 @@ defmodule AnomaExplorerWeb.ResourcesLive do
                     />
                   </div>
                 </td>
-                <td class="hidden lg:table-cell font-mono text-sm">
-                  {resource["blockNumber"]}
+                <td class="hidden lg:table-cell">
+                  <div class="flex items-center gap-1">
+                    <span class="font-mono text-sm">{resource["blockNumber"]}</span>
+                    <.copy_button text={to_string(resource["blockNumber"])} tooltip="Copy block number" />
+                  </div>
                 </td>
                 <td>
                   <%= if resource["transaction"] do %>

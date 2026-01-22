@@ -398,7 +398,10 @@ defmodule AnomaExplorerWeb.CommitmentsLive do
                   </span>
                 </td>
                 <td>
-                  <span class="font-mono text-sm">{commitment["blockNumber"]}</span>
+                  <div class="flex items-center gap-1">
+                    <span class="font-mono text-sm">{commitment["blockNumber"]}</span>
+                    <.copy_button text={to_string(commitment["blockNumber"])} tooltip="Copy block number" />
+                  </div>
                 </td>
                 <td class="hidden lg:table-cell text-base-content/60 text-sm">
                   {format_timestamp(commitment["timestamp"])}
