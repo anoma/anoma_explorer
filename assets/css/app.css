@@ -125,7 +125,7 @@
   @apply justify-center px-0 mx-1;
 }
 
-.sidebar.collapsed .sidebar-nav-item span {
+.sidebar.collapsed .sidebar-nav-item > span:not([class*="hero-"]) {
   @apply hidden;
 }
 
