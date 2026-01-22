@@ -42,6 +42,11 @@ import {
   isExecuteCalldata,
 } from "./decoders/ActionDecoder";
 import type { Action as DecodedAction } from "./types";
+import { BoundedCache } from "./utils/BoundedCache";
+import {
+  DECODED_CALLDATA_CACHE_MAX_SIZE,
+  isConsumedIndex,
+} from "./constants";
 
 // ============================================
 // Type Aliases
@@ -141,15 +146,16 @@ function createLogicInputId(actionId: string, index: number): string {
 // Calldata Decoding Cache
 // ============================================
 // Cache decoded calldata by txHash to avoid re-decoding for each ActionExecuted event
-// within the same EVM transaction.
-const decodedCalldataCache = new Map<
-  string,
-  {
-    actions: DecodedAction[];
-    deltaProof: string;
-    aggregationProof: string;
-  }
->();
+// within the same EVM transaction. Uses BoundedCache to prevent unbounded memory growth.
+type DecodedCalldata = {
+  actions: DecodedAction[];
+  deltaProof: string;
+  aggregationProof: string;
+};
+
+const decodedCalldataCache = new BoundedCache<string, DecodedCalldata>(
+  DECODED_CALLDATA_CACHE_MAX_SIZE
+);
 
 /**
  * Get decoded transaction data from cache or decode from calldata.
@@ -297,7 +303,7 @@ ProtocolAdapter.TransactionExecuted.handler(
     // Tags are in alternating order: consumed (nullifier), created (commitment), ...
     for (let index = 0; index < event.params.tags.length; index++) {
       const tag = event.params.tags[index];
-      const isConsumed = index % 2 === 0;
+      const isConsumed = isConsumedIndex(index);
       const resourceId = createResourceId(event.chainId, tag);
       const logicRef = event.params.logicRefs[index];
       const tagLower = tag.toLowerCase();
@@ -526,7 +532,7 @@ ProtocolAdapter.ActionExecuted.handler(
         const logicInputId = createLogicInputId(actionId, liIndex);
 
         // Determine if consumed based on index (even = consumed, odd = created)
-        const isConsumed = liIndex % 2 === 0;
+        const isConsumed = isConsumedIndex(liIndex);
 
         // Find resource by tag
         const resourceId = createResourceId(event.chainId, li.tag);

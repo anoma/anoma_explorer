@@ -22,6 +22,7 @@
  */
 
 import { decodeFunctionData, type Hex, type Abi } from "viem";
+import { EXECUTE_SELECTOR } from "../constants";
 import {
   Transaction,
   Action,
@@ -138,9 +139,6 @@ const EXECUTE_ABI: Abi = [
     outputs: [],
   },
 ];
-
-// Function selector for execute (first 4 bytes of keccak256("execute(...)"))
-const EXECUTE_SELECTOR = "0xed3cf91f";
 
 // Raw decoded types from viem
 interface RawExpirableBlob {
