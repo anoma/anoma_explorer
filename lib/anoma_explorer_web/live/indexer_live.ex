@@ -149,12 +149,9 @@ defmodule AnomaExplorerWeb.IndexerLive do
           <h1 class="page-title">Indexer Settings</h1>
           <p class="text-sm text-base-content/70 mt-1">
             Configure the
-            <a
-              href="https://envio.dev"
-              target="_blank"
-              rel="noopener"
-              class="link link-primary"
-            >Envio Hyperindex</a>
+            <a href="https://envio.dev" target="_blank" rel="noopener" class="link link-primary">
+              Envio Hyperindex
+            </a>
             GraphQL endpoint for indexed blockchain data
           </p>
         </div>
@@ -234,15 +231,7 @@ defmodule AnomaExplorerWeb.IndexerLive do
               <code class="text-sm font-mono bg-base-200 px-2 py-1 rounded flex-1 overflow-x-auto">
                 {@url}
               </code>
-              <button
-                type="button"
-                phx-click={JS.dispatch("phx:copy", to: "#url-copy", detail: %{text: @url})}
-                class="btn btn-ghost btn-sm"
-                title="Copy URL"
-              >
-                <.icon name="hero-clipboard-document" class="h-4 w-4" />
-              </button>
-              <span id="url-copy"></span>
+              <.copy_button text={@url} tooltip="Copy URL" size="sm" />
             </div>
           </div>
         <% end %>

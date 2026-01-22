@@ -190,14 +190,7 @@ defmodule AnomaExplorerWeb.SettingsLive do
                               >
                                 {truncate_address(address.address)}
                               </a>
-                              <button
-                                type="button"
-                                phx-click={JS.dispatch("phx:copy", detail: %{text: address.address})}
-                                class="btn btn-ghost btn-xs"
-                                title="Copy address"
-                              >
-                                <.icon name="hero-clipboard-document" class="w-3 h-3" />
-                              </button>
+                              <.copy_button text={address.address} tooltip="Copy address" />
                             </div>
                           </td>
                           <td>

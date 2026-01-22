@@ -410,7 +410,15 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
         <div>
           <h1 class="page-title">GraphQL Playground</h1>
           <p class="text-sm text-base-content/70 mt-1">
-            Execute GraphQL queries against the <a href="https://docs.envio.dev/docs/HyperIndex/overview" target="_blank" rel="noopener noreferrer" class="link link-primary">Envio HyperIndexer</a>
+            Execute GraphQL queries against the
+            <a
+              href="https://docs.envio.dev/docs/HyperIndex/overview"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="link link-primary"
+            >
+              Envio HyperIndexer
+            </a>
           </p>
         </div>
       </div>
@@ -540,7 +548,20 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
         <%= if @result do %>
           <button
             type="button"
-            phx-click={JS.dispatch("phx:copy", detail: %{text: @result})}
+            phx-click={
+              JS.dispatch("phx:copy", detail: %{text: @result})
+              |> JS.remove_class("opacity-50", to: "#copy-toast")
+              |> JS.add_class("opacity-100", to: "#copy-toast")
+              |> JS.show(
+                to: "#copy-toast",
+                transition: {"ease-out duration-200", "opacity-0", "opacity-100"}
+              )
+              |> JS.hide(
+                to: "#copy-toast",
+                time: 1500,
+                transition: {"ease-in duration-300", "opacity-100", "opacity-0"}
+              )
+            }
             class="btn btn-ghost btn-sm gap-1"
             title="Copy results"
           >
