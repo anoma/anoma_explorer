@@ -450,7 +450,6 @@ defmodule AnomaExplorerWeb.TransactionsLive do
                     <span class="badge badge-outline badge-sm text-success border-success/50">
                       {created}
                     </span>
-                    <.icon name="hero-arrow-top-right-on-square" class="w-3 h-3 text-base-content/50" />
                   </button>
                 </td>
                 <td class="hidden lg:table-cell text-base-content/60 text-sm">

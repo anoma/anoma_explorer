@@ -221,75 +221,102 @@ defmodule AnomaExplorerWeb.HomeLive do
 
   defp stats_grid(assigns) do
     ~H"""
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-4">
-      <.stat_card
-        label="Transactions"
-        value={@stats.transactions}
-        icon="hero-document-text"
-        color="primary"
-        href="/transactions"
-      />
-      <.stat_card
-        label="Resources"
-        value={@stats.resources}
-        icon="hero-cube"
-        color="secondary"
-        href="/resources"
-      />
-      <.stat_card
-        label="Consumed"
-        value={@stats.consumed}
-        icon="hero-arrow-right-start-on-rectangle"
-        color="error"
-        href="/nullifiers"
-      />
-      <.stat_card
-        label="Created"
-        value={@stats.created}
-        icon="hero-plus-circle"
-        color="success"
-        href="/commitments"
-      />
-      <.stat_card
-        label="Actions"
-        value={@stats.actions}
-        icon="hero-bolt"
-        color="warning"
-        href="/actions"
-      />
-      <.stat_card
-        label="Tree Roots"
-        value={@stats.commitment_roots}
-        icon="hero-server-stack"
-        color="info"
-        href="/commitments"
-      />
+    <div class="mb-4">
+      <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-3">
+        <.stat_card
+          label="Transactions"
+          value={@stats.transactions}
+          icon="hero-document-text"
+          color="primary"
+          href="/transactions"
+          tooltip="Total transactions processed by the Anoma protocol"
+        />
+        <.stat_card
+          label="Actions"
+          value={@stats.actions}
+          icon="hero-bolt"
+          color="warning"
+          href="/actions"
+          tooltip="Actions executed within transactions"
+        />
+        <.stat_card
+          label="Compliances"
+          value={@stats.compliances}
+          icon="hero-shield-check"
+          color="info"
+          href="/compliances"
+          tooltip="Compliance units ensuring transaction validity"
+        />
+        <.stat_card
+          label="Resources"
+          value={@stats.resources}
+          icon="hero-cube"
+          color="secondary"
+          href="/resources"
+          tooltip="Total resources (consumed + created)"
+        />
+        <.stat_card
+          label="Commitments"
+          value={@stats.created}
+          icon="hero-finger-print"
+          color="success"
+          href="/commitments"
+          tooltip="Created resource commitments"
+        />
+        <.stat_card
+          label="Nullifiers"
+          value={@stats.consumed}
+          icon="hero-no-symbol"
+          color="error"
+          href="/nullifiers"
+          tooltip="Consumed resource nullifiers"
+        />
+        <.stat_card
+          label="Logics"
+          value={@stats.logics}
+          icon="hero-cpu-chip"
+          color="accent"
+          href="/logics"
+          tooltip="Logic inputs for resource validation"
+        />
+      </div>
     </div>
     <.stats_warning stats={@stats} />
     """
   end
 
   defp stat_card(assigns) do
-    assigns = assign_new(assigns, :href, fn -> nil end)
+    assigns =
+      assigns
+      |> assign_new(:href, fn -> nil end)
+      |> assign_new(:tooltip, fn -> nil end)
 
     ~H"""
     <%= if @href do %>
-      <a href={@href} class="stat-card block hover:ring-2 hover:ring-primary/50 transition-all">
-        <div class="flex items-center gap-2 mb-1">
-          <.icon name={@icon} class={"w-4 h-4 text-#{@color}"} />
-          <span class="text-xs text-base-content/60 uppercase tracking-wide">{@label}</span>
+      <a
+        href={@href}
+        class="stat-card block hover:ring-2 hover:ring-primary/50 transition-all"
+        title={@tooltip}
+      >
+        <div class="flex items-center gap-1.5 mb-1">
+          <.icon name={@icon} class={"w-3.5 h-3.5 text-#{@color}"} />
+          <span class="text-[10px] text-base-content/60 uppercase tracking-wide truncate">
+            {@label}
+          </span>
         </div>
-        <div class="text-2xl font-bold text-base-content">
+        <div class="text-xl font-bold text-base-content">
           {format_number(@value)}
         </div>
       </a>
     <% else %>
-      <div class="stat-card">
-        <div class="flex items-center gap-2 mb-1">
-          <.icon name={@icon} class={"w-4 h-4 text-#{@color}"} />
-          <span class="text-xs text-base-content/60 uppercase tracking-wide">{@label}</span>
+      <div class="stat-card" title={@tooltip}>
+        <div class="flex items-center gap-1.5 mb-1">
+          <.icon name={@icon} class={"w-3.5 h-3.5 text-#{@color}"} />
+          <span class="text-[10px] text-base-content/60 uppercase tracking-wide truncate">
+            {@label}
+          </span>
         </div>
-        <div class="text-2xl font-bold text-base-content">
+        <div class="text-xl font-bold text-base-content">
           {format_number(@value)}
         </div>
       </div>
@@ -302,7 +329,8 @@ defmodule AnomaExplorerWeb.HomeLive do
       assigns.stats.transactions >= 1000 or
         assigns.stats.resources >= 1000 or
         assigns.stats.actions >= 1000 or
-        assigns.stats.commitment_roots >= 1000
+        (assigns.stats[:compliances] || 0) >= 1000 or
+        (assigns.stats[:logics] || 0) >= 1000
 
     assigns = assign(assigns, :show_warning, has_capped_value)
 
@@ -389,16 +417,15 @@ defmodule AnomaExplorerWeb.HomeLive do
                       phx-value-tx-id={tx["id"]}
                       phx-value-tags={Jason.encode!(tx["tags"] || [])}
                       phx-value-logic-refs={Jason.encode!(tx["logicRefs"] || [])}
-                      class="flex items-center gap-1 cursor-pointer hover:opacity-80"
+                      class="flex items-center gap-1.5 cursor-pointer hover:text-primary"
                       title="View resources"
                     >
-                      <span class="text-sm text-base-content/70">{consumed}</span>
-                      <.icon
-                        name="hero-arrow-right-start-on-rectangle"
-                        class="w-3 h-3 text-base-content/50"
-                      />
-                      <span class="text-sm text-base-content/70">{created}</span>
-                      <.icon name="hero-plus-circle" class="w-3 h-3 text-base-content/50" />
+                      <span class="badge badge-outline badge-sm text-error border-error/50">
+                        {consumed}
+                      </span>
+                      <span class="badge badge-outline badge-sm text-success border-success/50">
+                        {created}
+                      </span>
                     </button>
                   </td>
                   <td class="hidden lg:table-cell text-base-content/60 text-sm">
