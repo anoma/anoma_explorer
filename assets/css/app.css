@@ -306,3 +306,105 @@
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-neutral;
 }
+
+/* Falling blocks loading animation */
+@keyframes block-fall {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes block-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes block-stack {
+  0% {
+    transform: translateY(-200%) scale(0.8);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(10%) scale(1.05);
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(-5%);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.loading-blocks {
+  @apply flex items-end justify-center gap-1;
+  height: 48px;
+}
+
+.loading-block {
+  @apply rounded;
+  width: 10px;
+  animation: block-stack 0.6s ease-out forwards, block-bounce 1s ease-in-out infinite;
+  opacity: 0;
+}
+
+.loading-block:nth-child(1) {
+  @apply bg-primary;
+  height: 24px;
+  animation-delay: 0s, 0.6s;
+}
+
+.loading-block:nth-child(2) {
+  @apply bg-secondary;
+  height: 32px;
+  animation-delay: 0.1s, 0.7s;
+}
+
+.loading-block:nth-child(3) {
+  @apply bg-success;
+  height: 28px;
+  animation-delay: 0.2s, 0.8s;
+}
+
+.loading-block:nth-child(4) {
+  @apply bg-warning;
+  height: 36px;
+  animation-delay: 0.3s, 0.9s;
+}
+
+.loading-block:nth-child(5) {
+  @apply bg-info;
+  height: 20px;
+  animation-delay: 0.4s, 1.0s;
+}
+
+/* Table loading skeleton with falling animation */
+.table-skeleton-row {
+  @apply flex gap-4 py-3 px-4 border-b border-base-300/50;
+  animation: block-fall 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+.table-skeleton-row:nth-child(1) { animation-delay: 0.1s; }
+.table-skeleton-row:nth-child(2) { animation-delay: 0.15s; }
+.table-skeleton-row:nth-child(3) { animation-delay: 0.2s; }
+.table-skeleton-row:nth-child(4) { animation-delay: 0.25s; }
+.table-skeleton-row:nth-child(5) { animation-delay: 0.3s; }
+
+.skeleton-cell {
+  @apply bg-base-300 rounded;
+  animation: pulse 2s ease-in-out infinite;
+}

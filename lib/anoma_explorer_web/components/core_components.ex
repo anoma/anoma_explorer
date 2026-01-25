@@ -727,6 +727,78 @@ defmodule AnomaExplorerWeb.CoreComponents do
   end
 
   @doc """
+  Renders a loading animation with falling/stacking blocks.
+
+  This provides a visually appealing loading indicator that can be used
+  across different views while data is being fetched.
+
+  ## Examples
+
+      <.loading_blocks />
+      <.loading_blocks message="Loading transactions..." />
+      <.loading_blocks message="Fetching data..." class="py-8" />
+  """
+  attr :message, :string, default: "Loading...", doc: "the loading message to display"
+  attr :class, :string, default: "py-16", doc: "additional CSS classes for the container"
+
+  def loading_blocks(assigns) do
+    ~H"""
+    <div class={["flex flex-col items-center justify-center", @class]}>
+      <div class="loading-blocks mb-4">
+        <div class="loading-block"></div>
+        <div class="loading-block"></div>
+        <div class="loading-block"></div>
+        <div class="loading-block"></div>
+        <div class="loading-block"></div>
+      </div>
+      <p class="text-sm text-base-content/60 animate-pulse">{@message}</p>
+    </div>
+    """
+  end
+
+  @doc """
+  Renders a table skeleton with falling row animation.
+
+  Use this as a placeholder while table data is loading.
+
+  ## Examples
+
+      <.table_skeleton />
+      <.table_skeleton rows={10} />
+      <.table_skeleton rows={5} columns={6} />
+  """
+  attr :rows, :integer, default: 5, doc: "number of skeleton rows to display"
+  attr :columns, :integer, default: 8, doc: "number of columns per row"
+
+  def table_skeleton(assigns) do
+    ~H"""
+    <div class="stat-card">
+      <div class="flex items-center justify-between mb-4">
+        <div class="h-6 bg-base-300 rounded w-40 animate-pulse"></div>
+        <div class="h-8 bg-base-300 rounded w-24 animate-pulse"></div>
+      </div>
+      <div class="space-y-1">
+        <%= for i <- 1..@rows do %>
+          <div class="table-skeleton-row" style={"animation-delay: #{i * 0.1}s"}>
+            <%= for j <- 1..@columns do %>
+              <div class={[
+                "skeleton-cell h-4",
+                rem(j, 3) == 0 && "w-12",
+                rem(j, 3) == 1 && "w-24",
+                rem(j, 3) == 2 && "w-16",
+                j > 4 && "hidden md:block",
+                j > 6 && "hidden lg:block"
+              ]}>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    """
+  end
+
+  @doc """
   Translates an error message using gettext.
   """
   def translate_error({msg, opts}) do
