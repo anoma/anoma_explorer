@@ -449,16 +449,77 @@ defmodule AnomaExplorerWeb.TransactionsLive do
         <p>No transactions found</p>
       </div>
     <% else %>
-      <div class="overflow-x-auto">
+      <%!-- Mobile card layout --%>
+      <div class="space-y-3 lg:hidden">
+        <%= for tx <- @transactions do %>
+          <% evm_tx = tx["evmTransaction"] %>
+          <% tags = tx["tags"] || [] %>
+          <% consumed = div(length(tags), 2) %>
+          <% created = length(tags) - consumed %>
+          <div class="p-3 rounded-lg bg-base-200/50 hover:bg-base-200 transition-colors">
+            <div class="flex flex-col gap-1">
+              <div class="flex items-start gap-1">
+                <a href={"/transactions/#{tx["id"]}"} class="font-mono text-sm hover:text-primary break-all">
+                  {evm_tx["txHash"]}
+                </a>
+                <.copy_button text={evm_tx["txHash"]} tooltip="Copy tx hash" class="shrink-0" />
+              </div>
+              <div class="flex items-center gap-1 text-xs text-base-content/60">
+                <span>from:</span>
+                <span class="font-mono">{Formatting.truncate_hash(evm_tx["from"])}</span>
+                <.copy_button :if={evm_tx["from"]} text={evm_tx["from"]} tooltip="Copy address" />
+              </div>
+              <div class="flex items-center gap-1.5 text-xs text-base-content/50 flex-wrap">
+                <span
+                  class="hover:text-primary cursor-pointer"
+                  phx-click="show_chain_info"
+                  phx-value-chain-id={evm_tx["chainId"]}
+                >
+                  {Networks.short_name(evm_tx["chainId"])}
+                </span>
+                <span>•</span>
+                <%= if block_url = Networks.block_url(evm_tx["chainId"], evm_tx["blockNumber"]) do %>
+                  <a href={block_url} target="_blank" rel="noopener" class="hover:text-primary">
+                    #{evm_tx["blockNumber"]}
+                  </a>
+                <% else %>
+                  <span>#{evm_tx["blockNumber"]}</span>
+                <% end %>
+                <span>•</span>
+                <span>{Formatting.format_timestamp(evm_tx["timestamp"])}</span>
+                <span>•</span>
+                <button
+                  phx-click="show_resources"
+                  phx-value-tx-id={tx["id"]}
+                  phx-value-tags={Jason.encode!(tx["tags"] || [])}
+                  phx-value-logic-refs={Jason.encode!(tx["logicRefs"] || [])}
+                  class="inline-flex items-center gap-1 cursor-pointer hover:text-primary"
+                  title="View resources"
+                >
+                  <span class="badge badge-outline badge-xs text-error border-error/50">
+                    {consumed}
+                  </span>
+                  <span class="badge badge-outline badge-xs text-success border-success/50">
+                    {created}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <%!-- Desktop table layout --%>
+      <div class="hidden lg:block overflow-x-auto">
         <table class="data-table w-full">
           <thead>
             <tr>
-              <th title="Unique identifier of this EVM transaction on the blockchain">Tx Hash</th>
-              <th class="hidden sm:table-cell" title="Blockchain network where this transaction was recorded">Network</th>
-              <th class="hidden sm:table-cell" title="Block number where this transaction was included">Block</th>
-              <th class="hidden lg:table-cell" title="Account address that sent this transaction">From</th>
-              <th title="Count of nullifiers (consumed) and commitments (created)">Resources</th>
-              <th class="hidden xl:table-cell" title="When this transaction was included in a block">Time</th>
+              <th>Tx Hash</th>
+              <th>Network</th>
+              <th>Block</th>
+              <th>From</th>
+              <th>Resources</th>
+              <th>Time</th>
             </tr>
           </thead>
           <tbody>
@@ -467,30 +528,36 @@ defmodule AnomaExplorerWeb.TransactionsLive do
               <% tags = tx["tags"] || [] %>
               <% consumed = div(length(tags), 2) %>
               <% created = length(tags) - consumed %>
-              <tr class="hover:bg-base-200/50">
+              <tr>
                 <td>
-                  <div class="flex flex-col">
-                    <div class="flex items-center gap-1">
-                      <a href={"/transactions/#{tx["id"]}"} class="hash-display hover:text-primary">
-                        {Formatting.truncate_hash(evm_tx["txHash"])}
-                      </a>
-                      <.copy_button text={evm_tx["txHash"]} tooltip="Copy tx hash" class="hidden sm:inline-flex" />
-                    </div>
-                    <span class="text-xs text-base-content/50 xl:hidden">
-                      {Formatting.format_timestamp(evm_tx["timestamp"])}
-                    </span>
+                  <div class="flex items-center gap-1">
+                    <a href={"/transactions/#{tx["id"]}"} class="font-mono text-sm hover:text-primary">
+                      {evm_tx["txHash"]}
+                    </a>
+                    <.copy_button text={evm_tx["txHash"]} tooltip="Copy tx hash" />
                   </div>
                 </td>
-                <td class="hidden sm:table-cell">
+                <td>
                   <.network_button chain_id={evm_tx["chainId"]} />
                 </td>
-                <td class="hidden sm:table-cell">
+                <td>
                   <div class="flex items-center gap-1">
-                    <span class="font-mono text-sm">{evm_tx["blockNumber"]}</span>
+                    <%= if block_url = Networks.block_url(evm_tx["chainId"], evm_tx["blockNumber"]) do %>
+                      <a
+                        href={block_url}
+                        target="_blank"
+                        rel="noopener"
+                        class="font-mono text-sm link link-hover"
+                      >
+                        {evm_tx["blockNumber"]}
+                      </a>
+                    <% else %>
+                      <span class="font-mono text-sm">{evm_tx["blockNumber"]}</span>
+                    <% end %>
                     <.copy_button text={to_string(evm_tx["blockNumber"])} tooltip="Copy block number" />
                   </div>
                 </td>
-                <td class="hidden lg:table-cell">
+                <td>
                   <div class="flex items-center gap-1">
                     <span class="hash-display text-sm">{Formatting.truncate_hash(evm_tx["from"])}</span>
                     <.copy_button :if={evm_tx["from"]} text={evm_tx["from"]} tooltip="Copy address" />
@@ -513,7 +580,7 @@ defmodule AnomaExplorerWeb.TransactionsLive do
                     </span>
                   </button>
                 </td>
-                <td class="hidden xl:table-cell text-base-content/60 text-sm">
+                <td class="text-base-content/60 text-sm">
                   {Formatting.format_timestamp(evm_tx["timestamp"])}
                 </td>
               </tr>
