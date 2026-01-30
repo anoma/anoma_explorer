@@ -15,9 +15,16 @@ defmodule AnomaExplorerWeb.SSL do
 
   Health check endpoints are excluded because load balancers and monitoring
   services often make HTTP requests to these paths.
+
+  Handles both Plug.Conn struct and fallback cases defensively.
   """
-  @spec exclude_health_checks?(Plug.Conn.t()) :: boolean()
-  def exclude_health_checks?(conn) do
-    conn.request_path in @health_check_paths
+  @spec exclude_health_checks?(Plug.Conn.t() | any()) :: boolean()
+  def exclude_health_checks?(%Plug.Conn{request_path: path}) do
+    path in @health_check_paths
+  end
+
+  def exclude_health_checks?(_other) do
+    # Fallback for unexpected input - don't exclude, allow SSL redirect
+    false
   end
 end
