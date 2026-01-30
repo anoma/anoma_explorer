@@ -36,16 +36,10 @@ import {
 } from "generated";
 
 import { safeDecodeResourceBlob } from "./decoders/ResourceDecoder";
-import {
-  decodeExecuteCalldata,
-  isExecuteCalldata,
-} from "./decoders/ActionDecoder";
+import { decodeExecuteCalldata, isExecuteCalldata } from "./decoders/ActionDecoder";
 import type { Action as DecodedAction } from "./types";
 import { BoundedCache } from "./utils/BoundedCache";
-import {
-  DECODED_CALLDATA_CACHE_MAX_SIZE,
-  isConsumedIndex,
-} from "./constants";
+import { DECODED_CALLDATA_CACHE_MAX_SIZE, isConsumedIndex } from "./constants";
 
 // ============================================
 // Type Aliases
@@ -127,10 +121,7 @@ function createResourceId(chainId: number, tag: string): string {
 /**
  * Creates a compliance unit identifier.
  */
-function createComplianceUnitId(
-  actionId: string,
-  index: number
-): string {
+function createComplianceUnitId(actionId: string, index: number): string {
   return `${actionId}_compliance_${index}`;
 }
 
@@ -208,160 +199,155 @@ function clearDecodedCache(txHash: string): void {
 // This event fires LAST in the transaction, after all payload events.
 // It provides the authoritative list of tags and their consumed/created status.
 
-ProtocolAdapter.TransactionExecuted.handler(
-  async ({ event, context }: TransactionExecutedArgs) => {
-    // Cast transaction to access EVM fields
-    const tx = event.transaction as {
-      hash: string;
-      input?: string;
-      from?: string;
-      gas?: bigint;
-      gasPrice?: bigint;
-      gasUsed?: bigint;
-      value?: bigint;
-    };
+ProtocolAdapter.TransactionExecuted.handler(async ({ event, context }: TransactionExecutedArgs) => {
+  // Cast transaction to access EVM fields
+  const tx = event.transaction as {
+    hash: string;
+    input?: string;
+    from?: string;
+    gas?: bigint;
+    gasPrice?: bigint;
+    gasUsed?: bigint;
+    value?: bigint;
+  };
 
-    const txId = createTransactionId(event.chainId, tx.hash);
-    const txHash = tx.hash;
+  const txId = createTransactionId(event.chainId, tx.hash);
+  const txHash = tx.hash;
 
-    // Try to decode calldata for proofs
-    // Note: event.transaction.input is available because we added "input" to field_selection
-    const decoded = getDecodedTransaction(txHash, tx.input);
+  // Try to decode calldata for proofs
+  // Note: event.transaction.input is available because we added "input" to field_selection
+  const decoded = getDecodedTransaction(txHash, tx.input);
 
-    // Create EVMTransaction entity (the carrier/wrapper)
-    const evmTxEntity: EVMTransaction = {
-      id: txId,
-      txHash: txHash,
-      blockNumber: event.block.number,
-      timestamp: event.block.timestamp,
-      chainId: event.chainId,
-      from: tx.from,
-      value: tx.value,
-      gasPrice: tx.gasPrice,
-      gas: tx.gas,
-      gasUsed: tx.gasUsed,
-    };
+  // Create EVMTransaction entity (the carrier/wrapper)
+  const evmTxEntity: EVMTransaction = {
+    id: txId,
+    txHash: txHash,
+    blockNumber: event.block.number,
+    timestamp: event.block.timestamp,
+    chainId: event.chainId,
+    from: tx.from,
+    value: tx.value,
+    gasPrice: tx.gasPrice,
+    gas: tx.gas,
+    gasUsed: tx.gasUsed,
+  };
 
-    context.EVMTransaction.set(evmTxEntity);
+  context.EVMTransaction.set(evmTxEntity);
 
-    // Create Transaction entity (Anoma Transaction payload)
-    const txEntity: Transaction = {
-      id: txId,
-      logIndex: event.logIndex,
-      contractAddress: event.srcAddress,
-      tags: event.params.tags,
-      logicRefs: event.params.logicRefs,
-      deltaProof: decoded?.deltaProof,
-      aggregationProof: decoded?.aggregationProof,
-      evmTransaction_id: txId,
-    };
+  // Create Transaction entity (Anoma Transaction payload)
+  const txEntity: Transaction = {
+    id: txId,
+    logIndex: event.logIndex,
+    contractAddress: event.srcAddress,
+    tags: event.params.tags,
+    logicRefs: event.params.logicRefs,
+    deltaProof: decoded?.deltaProof,
+    aggregationProof: decoded?.aggregationProof,
+    evmTransaction_id: txId,
+  };
 
-    context.Transaction.set(txEntity);
+  context.Transaction.set(txEntity);
 
-    // Build a map from nullifier/commitment to compliance unit ID for linking resources
-    // This requires looking at all compliance units from all actions
-    const nullifierToComplianceUnit = new Map<string, string>();
-    const commitmentToComplianceUnit = new Map<string, string>();
-    const tagToLogicInput = new Map<string, string>();
+  // Build a map from nullifier/commitment to compliance unit ID for linking resources
+  // This requires looking at all compliance units from all actions
+  const nullifierToComplianceUnit = new Map<string, string>();
+  const commitmentToComplianceUnit = new Map<string, string>();
+  const tagToLogicInput = new Map<string, string>();
 
-    if (decoded) {
-      for (let actionIndex = 0; actionIndex < decoded.actions.length; actionIndex++) {
-        const action = decoded.actions[actionIndex];
-        // We need to find the action ID - it's based on actionTreeRoot which we can compute
-        // For now, we'll iterate through actions and match by index
-        // The ActionExecuted events have already created Action entities
+  if (decoded) {
+    for (let actionIndex = 0; actionIndex < decoded.actions.length; actionIndex++) {
+      const action = decoded.actions[actionIndex];
+      // We need to find the action ID - it's based on actionTreeRoot which we can compute
+      // For now, we'll iterate through actions and match by index
+      // The ActionExecuted events have already created Action entities
 
-        // Get all actions for this transaction to find the matching actionId
-        // Since we can't easily query by transaction here, we'll construct the ID
-        // based on the pattern used in ActionExecuted handler
+      // Get all actions for this transaction to find the matching actionId
+      // Since we can't easily query by transaction here, we'll construct the ID
+      // based on the pattern used in ActionExecuted handler
 
-        // Compliance units
-        for (let cuIndex = 0; cuIndex < action.complianceVerifierInputs.length; cuIndex++) {
-          const cu = action.complianceVerifierInputs[cuIndex];
-          // We need the actionId to construct compliance unit ID
-          // The ActionExecuted handler uses: `${txId}_${actionTreeRoot}`
-          // We don't have actionTreeRoot here directly, so we'll use action index
-          // This means we need to update how we track this...
+      // Compliance units
+      for (let cuIndex = 0; cuIndex < action.complianceVerifierInputs.length; cuIndex++) {
+        const cu = action.complianceVerifierInputs[cuIndex];
+        // We need the actionId to construct compliance unit ID
+        // The ActionExecuted handler uses: `${txId}_${actionTreeRoot}`
+        // We don't have actionTreeRoot here directly, so we'll use action index
+        // This means we need to update how we track this...
 
-          // For now, store by nullifier/commitment directly
-          nullifierToComplianceUnit.set(
-            cu.instance.consumed.nullifier.toLowerCase(),
-            `action_${actionIndex}_compliance_${cuIndex}`
-          );
-          commitmentToComplianceUnit.set(
-            cu.instance.created.commitment.toLowerCase(),
-            `action_${actionIndex}_compliance_${cuIndex}`
-          );
-        }
+        // For now, store by nullifier/commitment directly
+        nullifierToComplianceUnit.set(
+          cu.instance.consumed.nullifier.toLowerCase(),
+          `action_${actionIndex}_compliance_${cuIndex}`
+        );
+        commitmentToComplianceUnit.set(
+          cu.instance.created.commitment.toLowerCase(),
+          `action_${actionIndex}_compliance_${cuIndex}`
+        );
+      }
 
-        // Logic inputs - map tag to logic input
-        for (let liIndex = 0; liIndex < action.logicVerifierInputs.length; liIndex++) {
-          const li = action.logicVerifierInputs[liIndex];
-          tagToLogicInput.set(
-            li.tag.toLowerCase(),
-            `action_${actionIndex}_logic_${liIndex}`
-          );
-        }
+      // Logic inputs - map tag to logic input
+      for (let liIndex = 0; liIndex < action.logicVerifierInputs.length; liIndex++) {
+        const li = action.logicVerifierInputs[liIndex];
+        tagToLogicInput.set(li.tag.toLowerCase(), `action_${actionIndex}_logic_${liIndex}`);
       }
     }
-
-    // Update/Create Resource entities for each tag
-    // Tags are in alternating order: consumed (nullifier), created (commitment), ...
-    for (let index = 0; index < event.params.tags.length; index++) {
-      const tag = event.params.tags[index];
-      const isConsumed = isConsumedIndex(index);
-      const resourceId = createResourceId(event.chainId, tag);
-      const logicRef = event.params.logicRefs[index];
-      const tagLower = tag.toLowerCase();
-
-      // Find linked compliance unit and logic input
-      // Note: complianceUnit_id will be set by ActionExecuted handler
-      // We use isConsumed to determine which side of the compliance unit this resource is on
-      let complianceUnit_id: string | undefined;
-      let logicInput_id: string | undefined;
-
-      // Check if resource already exists (created by earlier ResourcePayload event)
-      const existingResource = await context.Resource.get(resourceId);
-
-      if (existingResource) {
-        // Update existing resource with authoritative isConsumed and index from TransactionExecuted
-        const updatedResource: Resource = {
-          ...existingResource,
-          index: index,
-          isConsumed: isConsumed,
-          transaction_id: txId,
-          logicRef: logicRef || existingResource.logicRef,
-          // Keep existing links if already set
-          logicInput_id: existingResource.logicInput_id || logicInput_id,
-          complianceUnit_id: existingResource.complianceUnit_id || complianceUnit_id,
-        };
-        context.Resource.set(updatedResource);
-      } else {
-        // Create new resource (ResourcePayload may not have fired yet or at all)
-        const resourceEntity: Resource = {
-          id: resourceId,
-          tag: tag,
-          index: index,
-          blobIndex: undefined,
-          isConsumed: isConsumed,
-          blockNumber: event.block.number,
-          chainId: event.chainId,
-          rawBlob: "",
-          decodingStatus: "pending",
-          decodingError: undefined,
-          transaction_id: txId,
-          logicRef: logicRef || undefined,
-          logicInput_id: logicInput_id,
-          complianceUnit_id: complianceUnit_id,
-        };
-        context.Resource.set(resourceEntity);
-      }
-    }
-
-    // Clear the cache after processing is complete
-    clearDecodedCache(txHash);
   }
-);
+
+  // Update/Create Resource entities for each tag
+  // Tags are in alternating order: consumed (nullifier), created (commitment), ...
+  for (let index = 0; index < event.params.tags.length; index++) {
+    const tag = event.params.tags[index];
+    const isConsumed = isConsumedIndex(index);
+    const resourceId = createResourceId(event.chainId, tag);
+    const logicRef = event.params.logicRefs[index];
+    const _tagLower = tag.toLowerCase();
+
+    // Find linked compliance unit and logic input
+    // Note: complianceUnit_id will be set by ActionExecuted handler
+    // We use isConsumed to determine which side of the compliance unit this resource is on
+    let complianceUnit_id: string | undefined;
+    let logicInput_id: string | undefined;
+
+    // Check if resource already exists (created by earlier ResourcePayload event)
+    const existingResource = await context.Resource.get(resourceId);
+
+    if (existingResource) {
+      // Update existing resource with authoritative isConsumed and index from TransactionExecuted
+      const updatedResource: Resource = {
+        ...existingResource,
+        index: index,
+        isConsumed: isConsumed,
+        transaction_id: txId,
+        logicRef: logicRef || existingResource.logicRef,
+        // Keep existing links if already set
+        logicInput_id: existingResource.logicInput_id || logicInput_id,
+        complianceUnit_id: existingResource.complianceUnit_id || complianceUnit_id,
+      };
+      context.Resource.set(updatedResource);
+    } else {
+      // Create new resource (ResourcePayload may not have fired yet or at all)
+      const resourceEntity: Resource = {
+        id: resourceId,
+        tag: tag,
+        index: index,
+        blobIndex: undefined,
+        isConsumed: isConsumed,
+        blockNumber: event.block.number,
+        chainId: event.chainId,
+        rawBlob: "",
+        decodingStatus: "pending",
+        decodingError: undefined,
+        transaction_id: txId,
+        logicRef: logicRef || undefined,
+        logicInput_id: logicInput_id,
+        complianceUnit_id: complianceUnit_id,
+      };
+      context.Resource.set(resourceEntity);
+    }
+  }
+
+  // Clear the cache after processing is complete
+  clearDecodedCache(txHash);
+});
 
 // ============================================
 // ActionExecuted Handler
@@ -369,177 +355,157 @@ ProtocolAdapter.TransactionExecuted.handler(
 // ActionExecuted fires BEFORE TransactionExecuted but AFTER payload events.
 // We decode the calldata here to create ComplianceUnit and LogicInput entities.
 
-ProtocolAdapter.ActionExecuted.handler(
-  async ({ event, context }: ActionExecutedArgs) => {
-    const txId = createTransactionId(event.chainId, event.transaction.hash);
-    const txHash = event.transaction.hash;
-    // Use txHash + actionTreeRoot for unique action ID since multiple actions can be in one tx
-    const actionId = `${txId}_${event.params.actionTreeRoot}`;
+ProtocolAdapter.ActionExecuted.handler(async ({ event, context }: ActionExecutedArgs) => {
+  const txId = createTransactionId(event.chainId, event.transaction.hash);
+  const txHash = event.transaction.hash;
+  // Use txHash + actionTreeRoot for unique action ID since multiple actions can be in one tx
+  const actionId = `${txId}_${event.params.actionTreeRoot}`;
 
-    // Try to decode calldata to get action details
-    const txInput = (event.transaction as { hash: string; input?: string })
-      .input;
-    const decoded = getDecodedTransaction(txHash, txInput);
+  // Try to decode calldata to get action details
+  const txInput = (event.transaction as { hash: string; input?: string }).input;
+  const decoded = getDecodedTransaction(txHash, txInput);
 
-    // Find which action index this is by matching actionTreeRoot
-    // For now, we'll try to match by index since we process actions in order
-    let actionIndex = 0;
-    let decodedAction: DecodedAction | null = null;
+  // Find which action index this is by matching actionTreeRoot
+  // For now, we'll try to match by index since we process actions in order
+  let actionIndex = 0;
+  let decodedAction: DecodedAction | null = null;
 
-    if (decoded) {
-      // Try to find the action by comparing actionTreeRoot
-      // The actionTreeRoot is computed from the action data
-      // Since we can't easily compute it here, we'll use the order of ActionExecuted events
-      // by tracking how many we've seen for this transaction
+  if (decoded) {
+    // Try to find the action by comparing actionTreeRoot
+    // The actionTreeRoot is computed from the action data
+    // Since we can't easily compute it here, we'll use the order of ActionExecuted events
+    // by tracking how many we've seen for this transaction
 
-      // Simple approach: assume actions are processed in order
-      // Count existing actions for this transaction
-      // Note: This is a limitation - we're assuming sequential processing
-      // A more robust solution would compute the actionTreeRoot from decoded data
+    // Simple approach: assume actions are processed in order
+    // Count existing actions for this transaction
+    // Note: This is a limitation - we're assuming sequential processing
+    // A more robust solution would compute the actionTreeRoot from decoded data
 
-      // For now, we'll iterate and pick the first action that hasn't been assigned
-      // Since ActionExecuted events come in order, this should work
-      for (let i = 0; i < decoded.actions.length; i++) {
-        const potentialAction = decoded.actions[i];
-        // Check if this action's tag count matches
-        if (
-          potentialAction.logicVerifierInputs.length ===
-          Number(event.params.actionTagCount)
-        ) {
-          // Likely match - use this action
-          decodedAction = potentialAction;
-          actionIndex = i;
-          break;
-        }
-      }
-
-      // If no match by tag count, just use index 0 (fallback)
-      if (!decodedAction && decoded.actions.length > 0) {
-        decodedAction = decoded.actions[0];
-        actionIndex = 0;
+    // For now, we'll iterate and pick the first action that hasn't been assigned
+    // Since ActionExecuted events come in order, this should work
+    for (let i = 0; i < decoded.actions.length; i++) {
+      const potentialAction = decoded.actions[i];
+      // Check if this action's tag count matches
+      if (potentialAction.logicVerifierInputs.length === Number(event.params.actionTagCount)) {
+        // Likely match - use this action
+        decodedAction = potentialAction;
+        actionIndex = i;
+        break;
       }
     }
 
-    // Create Action entity
-    const actionEntity: Action = {
-      id: actionId,
-      index: actionIndex,
-      actionTreeRoot: event.params.actionTreeRoot,
-      tagCount: Number(event.params.actionTagCount),
-      blockNumber: event.block.number,
-      chainId: event.chainId,
-      timestamp: event.block.timestamp,
-      transaction_id: txId,
-    };
+    // If no match by tag count, just use index 0 (fallback)
+    if (!decodedAction && decoded.actions.length > 0) {
+      decodedAction = decoded.actions[0];
+      actionIndex = 0;
+    }
+  }
 
-    context.Action.set(actionEntity);
+  // Create Action entity
+  const actionEntity: Action = {
+    id: actionId,
+    index: actionIndex,
+    actionTreeRoot: event.params.actionTreeRoot,
+    tagCount: Number(event.params.actionTagCount),
+    blockNumber: event.block.number,
+    chainId: event.chainId,
+    timestamp: event.block.timestamp,
+    transaction_id: txId,
+  };
 
-    // Create ComplianceUnit entities from decoded action
-    if (decodedAction) {
-      for (
-        let cuIndex = 0;
-        cuIndex < decodedAction.complianceVerifierInputs.length;
-        cuIndex++
-      ) {
-        const cu = decodedAction.complianceVerifierInputs[cuIndex];
-        const complianceUnitId = createComplianceUnitId(actionId, cuIndex);
+  context.Action.set(actionEntity);
 
-        // Find resources by nullifier/commitment
-        const consumedResourceId = createResourceId(
-          event.chainId,
-          cu.instance.consumed.nullifier
-        );
-        const createdResourceId = createResourceId(
-          event.chainId,
-          cu.instance.created.commitment
-        );
+  // Create ComplianceUnit entities from decoded action
+  if (decodedAction) {
+    for (let cuIndex = 0; cuIndex < decodedAction.complianceVerifierInputs.length; cuIndex++) {
+      const cu = decodedAction.complianceVerifierInputs[cuIndex];
+      const complianceUnitId = createComplianceUnitId(actionId, cuIndex);
 
-        // Try to get existing resources to link
-        const consumedResource = await context.Resource.get(consumedResourceId);
-        const createdResource = await context.Resource.get(createdResourceId);
+      // Find resources by nullifier/commitment
+      const consumedResourceId = createResourceId(event.chainId, cu.instance.consumed.nullifier);
+      const createdResourceId = createResourceId(event.chainId, cu.instance.created.commitment);
 
-        const complianceEntity: ComplianceUnit = {
-          id: complianceUnitId,
-          index: cuIndex,
-          proof: cu.proof || undefined,
-          consumedNullifier: cu.instance.consumed.nullifier,
-          consumedLogicRef: cu.instance.consumed.logicRef,
-          consumedCommitmentTreeRoot: cu.instance.consumed.commitmentTreeRoot,
-          createdCommitment: cu.instance.created.commitment,
-          createdLogicRef: cu.instance.created.logicRef,
-          unitDeltaX: cu.instance.unitDeltaX,
-          unitDeltaY: cu.instance.unitDeltaY,
-          action_id: actionId,
-          consumedResource_id: consumedResource ? consumedResourceId : undefined,
-          createdResource_id: createdResource ? createdResourceId : undefined,
+      // Try to get existing resources to link
+      const consumedResource = await context.Resource.get(consumedResourceId);
+      const createdResource = await context.Resource.get(createdResourceId);
+
+      const complianceEntity: ComplianceUnit = {
+        id: complianceUnitId,
+        index: cuIndex,
+        proof: cu.proof || undefined,
+        consumedNullifier: cu.instance.consumed.nullifier,
+        consumedLogicRef: cu.instance.consumed.logicRef,
+        consumedCommitmentTreeRoot: cu.instance.consumed.commitmentTreeRoot,
+        createdCommitment: cu.instance.created.commitment,
+        createdLogicRef: cu.instance.created.logicRef,
+        unitDeltaX: cu.instance.unitDeltaX,
+        unitDeltaY: cu.instance.unitDeltaY,
+        action_id: actionId,
+        consumedResource_id: consumedResource ? consumedResourceId : undefined,
+        createdResource_id: createdResource ? createdResourceId : undefined,
+      };
+
+      context.ComplianceUnit.set(complianceEntity);
+
+      // Update resources with compliance unit link if they exist
+      // The isConsumed field on the resource determines which side of the unit it's on
+      if (consumedResource) {
+        const updatedResource: Resource = {
+          ...consumedResource,
+          complianceUnit_id: complianceUnitId,
         };
-
-        context.ComplianceUnit.set(complianceEntity);
-
-        // Update resources with compliance unit link if they exist
-        // The isConsumed field on the resource determines which side of the unit it's on
-        if (consumedResource) {
-          const updatedResource: Resource = {
-            ...consumedResource,
-            complianceUnit_id: complianceUnitId,
-          };
-          context.Resource.set(updatedResource);
-        }
-
-        if (createdResource) {
-          const updatedResource: Resource = {
-            ...createdResource,
-            complianceUnit_id: complianceUnitId,
-          };
-          context.Resource.set(updatedResource);
-        }
+        context.Resource.set(updatedResource);
       }
 
-      // Create LogicInput entities from decoded action
-      for (
-        let liIndex = 0;
-        liIndex < decodedAction.logicVerifierInputs.length;
-        liIndex++
-      ) {
-        const li = decodedAction.logicVerifierInputs[liIndex];
-        const logicInputId = createLogicInputId(actionId, liIndex);
-
-        // Determine if consumed based on index (even = consumed, odd = created)
-        const isConsumed = isConsumedIndex(liIndex);
-
-        // Find resource by tag
-        const resourceId = createResourceId(event.chainId, li.tag);
-        const resource = await context.Resource.get(resourceId);
-
-        const logicEntity: LogicInput = {
-          id: logicInputId,
-          index: liIndex,
-          tag: li.tag,
-          logicRef: li.verifyingKey, // verifyingKey in PA-EVM is the logicRef
-          isConsumed: isConsumed,
-          proof: li.proof || undefined,
-          resourcePayloadCount: li.appData.resourcePayload.length,
-          discoveryPayloadCount: li.appData.discoveryPayload.length,
-          externalPayloadCount: li.appData.externalPayload.length,
-          applicationPayloadCount: li.appData.applicationPayload.length,
-          action_id: actionId,
-          resource_id: resource ? resourceId : undefined,
+      if (createdResource) {
+        const updatedResource: Resource = {
+          ...createdResource,
+          complianceUnit_id: complianceUnitId,
         };
+        context.Resource.set(updatedResource);
+      }
+    }
 
-        context.LogicInput.set(logicEntity);
+    // Create LogicInput entities from decoded action
+    for (let liIndex = 0; liIndex < decodedAction.logicVerifierInputs.length; liIndex++) {
+      const li = decodedAction.logicVerifierInputs[liIndex];
+      const logicInputId = createLogicInputId(actionId, liIndex);
 
-        // Update resource with logic input link if it exists
-        if (resource) {
-          const updatedResource: Resource = {
-            ...resource,
-            logicInput_id: logicInputId,
-          };
-          context.Resource.set(updatedResource);
-        }
+      // Determine if consumed based on index (even = consumed, odd = created)
+      const isConsumed = isConsumedIndex(liIndex);
+
+      // Find resource by tag
+      const resourceId = createResourceId(event.chainId, li.tag);
+      const resource = await context.Resource.get(resourceId);
+
+      const logicEntity: LogicInput = {
+        id: logicInputId,
+        index: liIndex,
+        tag: li.tag,
+        logicRef: li.verifyingKey, // verifyingKey in PA-EVM is the logicRef
+        isConsumed: isConsumed,
+        proof: li.proof || undefined,
+        resourcePayloadCount: li.appData.resourcePayload.length,
+        discoveryPayloadCount: li.appData.discoveryPayload.length,
+        externalPayloadCount: li.appData.externalPayload.length,
+        applicationPayloadCount: li.appData.applicationPayload.length,
+        action_id: actionId,
+        resource_id: resource ? resourceId : undefined,
+      };
+
+      context.LogicInput.set(logicEntity);
+
+      // Update resource with logic input link if it exists
+      if (resource) {
+        const updatedResource: Resource = {
+          ...resource,
+          logicInput_id: logicInputId,
+        };
+        context.Resource.set(updatedResource);
       }
     }
   }
-);
+});
 
 // ============================================
 // ResourcePayload Handler
@@ -547,52 +513,50 @@ ProtocolAdapter.ActionExecuted.handler(
 // ResourcePayload fires BEFORE TransactionExecuted.
 // We create/update the Resource but isConsumed will be set correctly by TransactionExecuted later.
 
-ProtocolAdapter.ResourcePayload.handler(
-  async ({ event, context }: ResourcePayloadArgs) => {
-    const resourceId = createResourceId(event.chainId, event.params.tag);
-    const txId = createTransactionId(event.chainId, event.transaction.hash);
+ProtocolAdapter.ResourcePayload.handler(async ({ event, context }: ResourcePayloadArgs) => {
+  const resourceId = createResourceId(event.chainId, event.params.tag);
+  const txId = createTransactionId(event.chainId, event.transaction.hash);
 
-    // Decode the blob
-    const decoded = safeDecodeResourceBlob(event.params.blob);
+  // Decode the blob
+  const decoded = safeDecodeResourceBlob(event.params.blob);
 
-    // Check if resource already exists
-    const existingResource = await context.Resource.get(resourceId);
+  // Check if resource already exists
+  const existingResource = await context.Resource.get(resourceId);
 
-    if (existingResource) {
-      // Update existing resource with blob data (preserve isConsumed if already set)
-      const updatedResource: Resource = {
-        ...existingResource,
-        blobIndex: Number(event.params.index),
-        rawBlob: event.params.blob,
-        decodingStatus: decoded.status,
-        decodingError: decoded.error || undefined,
-        // logicRef comes from TransactionExecuted, not from blob decoding
-        logicRef: existingResource.logicRef,
-      };
-      context.Resource.set(updatedResource);
-    } else {
-      // Create new resource - isConsumed will be updated by TransactionExecuted
-      // Use index 0 as placeholder (Tag Index will be set by TransactionExecuted)
-      const resourceEntity: Resource = {
-        id: resourceId,
-        tag: event.params.tag,
-        index: 0, // Placeholder - will be set by TransactionExecuted
-        blobIndex: Number(event.params.index),
-        isConsumed: false, // Placeholder - will be set correctly by TransactionExecuted
-        blockNumber: event.block.number,
-        chainId: event.chainId,
-        rawBlob: event.params.blob,
-        decodingStatus: decoded.status,
-        decodingError: decoded.error || undefined,
-        transaction_id: txId,
-        logicRef: undefined, // Will be set by TransactionExecuted
-        logicInput_id: undefined,
-        complianceUnit_id: undefined,
-      };
-      context.Resource.set(resourceEntity);
-    }
+  if (existingResource) {
+    // Update existing resource with blob data (preserve isConsumed if already set)
+    const updatedResource: Resource = {
+      ...existingResource,
+      blobIndex: Number(event.params.index),
+      rawBlob: event.params.blob,
+      decodingStatus: decoded.status,
+      decodingError: decoded.error || undefined,
+      // logicRef comes from TransactionExecuted, not from blob decoding
+      logicRef: existingResource.logicRef,
+    };
+    context.Resource.set(updatedResource);
+  } else {
+    // Create new resource - isConsumed will be updated by TransactionExecuted
+    // Use index 0 as placeholder (Tag Index will be set by TransactionExecuted)
+    const resourceEntity: Resource = {
+      id: resourceId,
+      tag: event.params.tag,
+      index: 0, // Placeholder - will be set by TransactionExecuted
+      blobIndex: Number(event.params.index),
+      isConsumed: false, // Placeholder - will be set correctly by TransactionExecuted
+      blockNumber: event.block.number,
+      chainId: event.chainId,
+      rawBlob: event.params.blob,
+      decodingStatus: decoded.status,
+      decodingError: decoded.error || undefined,
+      transaction_id: txId,
+      logicRef: undefined, // Will be set by TransactionExecuted
+      logicInput_id: undefined,
+      complianceUnit_id: undefined,
+    };
+    context.Resource.set(resourceEntity);
   }
-);
+});
 
 // ============================================
 // Payload Handlers (Discovery, External, Application)
@@ -627,32 +591,30 @@ function createPayloadEntity(
   };
 }
 
-ProtocolAdapter.DiscoveryPayload.handler(
-  async ({ event, context }: DiscoveryPayloadArgs) => {
-    const entity = createPayloadEntity(event, "discovery");
-    context.Payload.set(entity);
-  }
-);
+// eslint-disable-next-line @typescript-eslint/require-await
+ProtocolAdapter.DiscoveryPayload.handler(async ({ event, context }: DiscoveryPayloadArgs) => {
+  const entity = createPayloadEntity(event, "discovery");
+  context.Payload.set(entity);
+});
 
-ProtocolAdapter.ExternalPayload.handler(
-  async ({ event, context }: ExternalPayloadArgs) => {
-    const entity = createPayloadEntity(event, "forwarder");
-    context.Payload.set(entity);
-  }
-);
+// eslint-disable-next-line @typescript-eslint/require-await
+ProtocolAdapter.ExternalPayload.handler(async ({ event, context }: ExternalPayloadArgs) => {
+  const entity = createPayloadEntity(event, "forwarder");
+  context.Payload.set(entity);
+});
 
-ProtocolAdapter.ApplicationPayload.handler(
-  async ({ event, context }: ApplicationPayloadArgs) => {
-    const entity = createPayloadEntity(event, "application");
-    context.Payload.set(entity);
-  }
-);
+// eslint-disable-next-line @typescript-eslint/require-await
+ProtocolAdapter.ApplicationPayload.handler(async ({ event, context }: ApplicationPayloadArgs) => {
+  const entity = createPayloadEntity(event, "application");
+  context.Payload.set(entity);
+});
 
 // ============================================
 // CommitmentTreeRootAdded Handler
 // ============================================
 
 ProtocolAdapter.CommitmentTreeRootAdded.handler(
+  // eslint-disable-next-line @typescript-eslint/require-await
   async ({ event, context }: CommitmentTreeRootAddedArgs) => {
     const eventId = createEventId(event);
 
@@ -677,6 +639,7 @@ ProtocolAdapter.CommitmentTreeRootAdded.handler(
 // ============================================
 
 ProtocolAdapter.ForwarderCallExecuted.handler(
+  // eslint-disable-next-line @typescript-eslint/require-await
   async ({ event, context }: ForwarderCallExecutedArgs) => {
     const eventId = createEventId(event);
 

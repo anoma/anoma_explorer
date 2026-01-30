@@ -8,7 +8,7 @@ describe("ResourceDecoder", () => {
       expect(result1.status).to.equal("pending");
       expect(result1.resource).to.be.null;
 
-      // @ts-ignore
+      // @ts-expect-error Testing null input handling
       const result2 = safeDecodeResourceBlob(null);
       expect(result2.status).to.equal("pending");
     });

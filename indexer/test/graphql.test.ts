@@ -10,14 +10,16 @@
 
 import { expect } from "chai";
 
-const GRAPHQL_URL = process.env.ENVIO_GRAPHQL_URL;
-
-if (!GRAPHQL_URL) {
-  throw new Error(
-    "ENVIO_GRAPHQL_URL environment variable is required. " +
-      "Set it to your Envio Hyperindex GraphQL endpoint."
-  );
-}
+const GRAPHQL_URL: string = (() => {
+  const url = process.env.ENVIO_GRAPHQL_URL;
+  if (!url) {
+    throw new Error(
+      "ENVIO_GRAPHQL_URL environment variable is required. " +
+        "Set it to your Envio Hyperindex GraphQL endpoint."
+    );
+  }
+  return url;
+})();
 
 interface GraphQLResponse<T> {
   data?: T;

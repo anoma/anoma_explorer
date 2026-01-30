@@ -204,9 +204,7 @@ export interface DecodedTransactionError {
   error: string;
 }
 
-export type DecodedTransactionResponse =
-  | DecodedTransactionResult
-  | DecodedTransactionError;
+export type DecodedTransactionResponse = DecodedTransactionResult | DecodedTransactionError;
 
 /**
  * Convert raw expirable blob from ABI decoding to typed format
@@ -214,10 +212,8 @@ export type DecodedTransactionResponse =
 function convertExpirableBlob(raw: RawExpirableBlob): ExpirableBlob {
   return {
     deletionCriterion:
-      raw.deletionCriterion === 0
-        ? DeletionCriterion.Immediately
-        : DeletionCriterion.Never,
-    blob: raw.blob as `0x${string}`,
+      raw.deletionCriterion === 0 ? DeletionCriterion.Immediately : DeletionCriterion.Never,
+    blob: raw.blob,
   };
 }
 
@@ -238,34 +234,31 @@ function convertAppData(raw: RawAppData): AppData {
  */
 function convertLogicInput(raw: RawLogicInput): LogicVerifierInput {
   return {
-    tag: raw.tag as `0x${string}`,
-    verifyingKey: raw.verifyingKey as `0x${string}`,
+    tag: raw.tag,
+    verifyingKey: raw.verifyingKey,
     appData: convertAppData(raw.appData),
-    proof: raw.proof as `0x${string}`,
+    proof: raw.proof,
   };
 }
 
 /**
  * Convert raw compliance verifier input from ABI decoding to typed format
  */
-function convertComplianceInput(
-  raw: RawComplianceInput
-): ComplianceVerifierInput {
+function convertComplianceInput(raw: RawComplianceInput): ComplianceVerifierInput {
   return {
-    proof: raw.proof as `0x${string}`,
+    proof: raw.proof,
     instance: {
       consumed: {
-        nullifier: raw.instance.consumed.nullifier as `0x${string}`,
-        logicRef: raw.instance.consumed.logicRef as `0x${string}`,
-        commitmentTreeRoot: raw.instance.consumed
-          .commitmentTreeRoot as `0x${string}`,
+        nullifier: raw.instance.consumed.nullifier,
+        logicRef: raw.instance.consumed.logicRef,
+        commitmentTreeRoot: raw.instance.consumed.commitmentTreeRoot,
       },
       created: {
-        commitment: raw.instance.created.commitment as `0x${string}`,
-        logicRef: raw.instance.created.logicRef as `0x${string}`,
+        commitment: raw.instance.created.commitment,
+        logicRef: raw.instance.created.logicRef,
       },
-      unitDeltaX: raw.instance.unitDeltaX as `0x${string}`,
-      unitDeltaY: raw.instance.unitDeltaY as `0x${string}`,
+      unitDeltaX: raw.instance.unitDeltaX,
+      unitDeltaY: raw.instance.unitDeltaY,
     },
   };
 }
@@ -276,8 +269,7 @@ function convertComplianceInput(
 function convertAction(raw: RawAction): Action {
   return {
     logicVerifierInputs: raw.logicVerifierInputs.map(convertLogicInput),
-    complianceVerifierInputs:
-      raw.complianceVerifierInputs.map(convertComplianceInput),
+    complianceVerifierInputs: raw.complianceVerifierInputs.map(convertComplianceInput),
   };
 }
 
@@ -287,8 +279,8 @@ function convertAction(raw: RawAction): Action {
 function convertTransaction(raw: RawTransaction): Transaction {
   return {
     actions: raw.actions.map(convertAction),
-    deltaProof: raw.deltaProof as `0x${string}`,
-    aggregationProof: raw.aggregationProof as `0x${string}`,
+    deltaProof: raw.deltaProof,
+    aggregationProof: raw.aggregationProof,
   };
 }
 
@@ -298,18 +290,14 @@ function convertTransaction(raw: RawTransaction): Transaction {
  * @param input - The transaction input/calldata as a hex string
  * @returns Decoded Transaction or error
  */
-export function decodeExecuteCalldata(
-  input: string
-): DecodedTransactionResponse {
+export function decodeExecuteCalldata(input: string): DecodedTransactionResponse {
   try {
     // Validate input
     if (!input || input === "0x") {
       return { success: false, error: "Empty calldata" };
     }
 
-    const hexInput = input.startsWith("0x")
-      ? (input as Hex)
-      : (`0x${input}` as Hex);
+    const hexInput: Hex = input.startsWith("0x") ? (input as Hex) : `0x${input}`;
 
     // Check function selector
     const selector = hexInput.slice(0, 10).toLowerCase();
@@ -353,7 +341,9 @@ export function decodeExecuteCalldata(
  * Check if calldata is for the execute function.
  */
 export function isExecuteCalldata(input: string): boolean {
-  if (!input || input.length < 10) return false;
+  if (!input || input.length < 10) {
+    return false;
+  }
   const hexInput = input.startsWith("0x") ? input : `0x${input}`;
   return hexInput.slice(0, 10).toLowerCase() === EXECUTE_SELECTOR;
 }
@@ -362,12 +352,11 @@ export function isExecuteCalldata(input: string): boolean {
  * Get action at a specific index from decoded calldata.
  * Returns null if calldata cannot be decoded or index is out of bounds.
  */
-export function getActionFromCalldata(
-  input: string,
-  actionIndex: number
-): Action | null {
+export function getActionFromCalldata(input: string, actionIndex: number): Action | null {
   const result = decodeExecuteCalldata(input);
-  if (!result.success) return null;
+  if (!result.success) {
+    return null;
+  }
 
   const { transaction } = result;
   if (actionIndex < 0 || actionIndex >= transaction.actions.length) {

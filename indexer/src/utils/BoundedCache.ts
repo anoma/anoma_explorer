@@ -42,7 +42,7 @@ export class BoundedCache<K, V> {
 
     // Evict oldest entries if at capacity
     while (this.cache.size >= this.maxSize) {
-      const oldestKey = this.cache.keys().next().value;
+      const oldestKey = this.cache.keys().next().value as K | undefined;
       if (oldestKey !== undefined) {
         this.cache.delete(oldestKey);
       }
