@@ -12,7 +12,8 @@ defmodule AnomaExplorer.EnvConfig do
           required: boolean(),
           env: :all | :prod | :dev | :test,
           category: atom(),
-          default: String.t() | nil
+          default: String.t() | nil,
+          secret: boolean()
         }
 
   @env_vars [

@@ -9,6 +9,17 @@ defmodule AnomaExplorer.Settings.Protocol do
 
   alias AnomaExplorer.Settings.ContractAddress
 
+  @type t :: %__MODULE__{
+          id: integer() | nil,
+          name: String.t() | nil,
+          description: String.t() | nil,
+          github_url: String.t() | nil,
+          active: boolean(),
+          contract_addresses: [ContractAddress.t()] | Ecto.Association.NotLoaded.t(),
+          inserted_at: DateTime.t() | nil,
+          updated_at: DateTime.t() | nil
+        }
+
   schema "protocols" do
     field :name, :string
     field :description, :string

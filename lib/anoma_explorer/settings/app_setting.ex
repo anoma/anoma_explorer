@@ -7,7 +7,7 @@ defmodule AnomaExplorer.Settings.AppSetting do
 
   @type t :: %__MODULE__{
           id: integer() | nil,
-          key: String.t(),
+          key: String.t() | nil,
           value: String.t() | nil,
           description: String.t() | nil,
           inserted_at: DateTime.t() | nil,

@@ -8,6 +8,19 @@ defmodule AnomaExplorer.Settings.Network do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @type t :: %__MODULE__{
+          id: integer() | nil,
+          name: String.t() | nil,
+          display_name: String.t() | nil,
+          chain_id: integer() | nil,
+          explorer_url: String.t() | nil,
+          rpc_url: String.t() | nil,
+          is_testnet: boolean(),
+          active: boolean(),
+          inserted_at: DateTime.t() | nil,
+          updated_at: DateTime.t() | nil
+        }
+
   schema "networks" do
     field :name, :string
     field :display_name, :string

@@ -11,6 +11,19 @@ defmodule AnomaExplorer.Settings.ContractAddress do
 
   alias AnomaExplorer.Settings.Protocol
 
+  @type t :: %__MODULE__{
+          id: integer() | nil,
+          category: String.t() | nil,
+          version: String.t() | nil,
+          network: String.t() | nil,
+          address: String.t() | nil,
+          active: boolean(),
+          protocol_id: integer() | nil,
+          protocol: Protocol.t() | Ecto.Association.NotLoaded.t() | nil,
+          inserted_at: DateTime.t() | nil,
+          updated_at: DateTime.t() | nil
+        }
+
   schema "contract_addresses" do
     # For example: pa-evm
     field :category, :string
