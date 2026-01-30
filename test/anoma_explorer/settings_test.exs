@@ -6,6 +6,7 @@ defmodule AnomaExplorer.SettingsTest do
 
   alias AnomaExplorer.Settings
   alias AnomaExplorer.Settings.AppSetting
+  alias AnomaExplorer.Settings.Cache
 
   describe "get_envio_url/0" do
     test "returns nil when not set" do
@@ -100,15 +101,20 @@ defmodule AnomaExplorer.SettingsTest do
 
   # Helper functions
   defp insert_envio_url(url) do
-    Repo.insert!(
-      %AppSetting{key: "envio_graphql_url", value: url},
-      on_conflict: {:replace, [:value]},
-      conflict_target: :key
-    )
+    setting =
+      Repo.insert!(
+        %AppSetting{key: "envio_graphql_url", value: url},
+        on_conflict: {:replace, [:value]},
+        conflict_target: :key
+      )
+
+    Cache.put_app_setting("envio_graphql_url", url)
+    setting
   end
 
   defp clear_envio_url do
     Repo.delete_all(AppSetting)
+    Cache.delete_app_setting("envio_graphql_url")
     Application.delete_env(:anoma_explorer, :envio_graphql_url)
   end
 end

@@ -363,43 +363,70 @@ defmodule AnomaExplorer.Settings do
 
   @doc """
   Gets an app setting by key.
+  Uses ETS cache for fast lookups, falling back to database if not cached.
   """
   @spec get_app_setting(String.t()) :: String.t() | nil
   def get_app_setting(key) do
-    case Repo.get_by(AppSetting, key: key) do
-      nil -> nil
-      setting -> setting.value
+    case Cache.get_app_setting(key) do
+      {:ok, value} ->
+        value
+
+      :not_found ->
+        case Repo.get_by(AppSetting, key: key) do
+          nil ->
+            nil
+
+          setting ->
+            Cache.put_app_setting(key, setting.value)
+            setting.value
+        end
     end
   end
 
   @doc """
   Sets an app setting. Creates or updates the setting.
+  Updates the cache on success.
   """
   @spec set_app_setting(String.t(), String.t(), String.t() | nil) ::
           {:ok, AppSetting.t()} | {:error, Ecto.Changeset.t()}
   def set_app_setting(key, value, description \\ nil) do
-    case Repo.get_by(AppSetting, key: key) do
-      nil ->
-        %AppSetting{}
-        |> AppSetting.changeset(%{key: key, value: value, description: description})
-        |> Repo.insert()
+    result =
+      case Repo.get_by(AppSetting, key: key) do
+        nil ->
+          %AppSetting{}
+          |> AppSetting.changeset(%{key: key, value: value, description: description})
+          |> Repo.insert()
 
-      setting ->
-        setting
-        |> AppSetting.changeset(%{value: value, description: description})
-        |> Repo.update()
-    end
+        setting ->
+          setting
+          |> AppSetting.changeset(%{value: value, description: description})
+          |> Repo.update()
+      end
+
+    result
+    |> tap_ok(fn setting -> Cache.put_app_setting(setting.key, setting.value) end)
     |> tap_ok(&broadcast_change({:app_setting_updated, &1}))
   end
 
   @doc """
   Deletes an app setting by key.
+  Removes from cache on success.
   """
   @spec delete_app_setting(String.t()) :: {:ok, AppSetting.t()} | {:error, :not_found}
   def delete_app_setting(key) do
     case Repo.get_by(AppSetting, key: key) do
-      nil -> {:error, :not_found}
-      setting -> Repo.delete(setting)
+      nil ->
+        {:error, :not_found}
+
+      setting ->
+        case Repo.delete(setting) do
+          {:ok, deleted} ->
+            Cache.delete_app_setting(key)
+            {:ok, deleted}
+
+          error ->
+            error
+        end
     end
   end
 

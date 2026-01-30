@@ -1,17 +1,21 @@
 defmodule AnomaExplorer.Settings.Cache do
   @moduledoc """
-  ETS-based cache for contract addresses.
+  ETS-based cache for contract addresses and app settings.
 
-  Provides fast concurrent reads for address lookups.
+  Provides fast concurrent reads for address and setting lookups.
   The GenServer owns the ETS table and handles cache population.
 
-  Cache key structure: {protocol_id, category, version, network} -> address
+  Cache key structures:
+  - Contract addresses: {protocol_id, category, version, network} -> address
+  - Protocol names: {:protocol_name, name} -> protocol_id
+  - App settings: {:app_setting, key} -> value
   """
   use GenServer
 
   require Logger
 
   alias AnomaExplorer.Settings.ContractAddress
+  alias AnomaExplorer.Settings.AppSetting
 
   @table_name :contract_addresses_cache
 
@@ -106,6 +110,40 @@ defmodule AnomaExplorer.Settings.Cache do
     :ok
   end
 
+  # ============================================
+  # App Settings Cache
+  # ============================================
+
+  @doc """
+  Gets an app setting value from cache.
+  Returns {:ok, value} or :not_found.
+  """
+  @spec get_app_setting(String.t()) :: {:ok, String.t()} | :not_found
+  def get_app_setting(key) do
+    case :ets.lookup(@table_name, {:app_setting, key}) do
+      [{_, value}] -> {:ok, value}
+      [] -> :not_found
+    end
+  end
+
+  @doc """
+  Puts an app setting value into the cache.
+  """
+  @spec put_app_setting(String.t(), String.t()) :: :ok
+  def put_app_setting(key, value) do
+    :ets.insert(@table_name, {{:app_setting, key}, value})
+    :ok
+  end
+
+  @doc """
+  Deletes an app setting from the cache.
+  """
+  @spec delete_app_setting(String.t()) :: :ok
+  def delete_app_setting(key) do
+    :ets.delete(@table_name, {:app_setting, key})
+    :ok
+  end
+
   @doc """
   Deletes an entry from cache.
   """
@@ -155,7 +193,8 @@ defmodule AnomaExplorer.Settings.Cache do
       {:ok, counts} ->
         Logger.info("Settings cache initialized",
           protocols: counts.protocols,
-          addresses: counts.addresses
+          addresses: counts.addresses,
+          app_settings: counts.app_settings
         )
 
       {:error, reason} ->
@@ -189,7 +228,8 @@ defmodule AnomaExplorer.Settings.Cache do
     try do
       protocol_count = load_protocols()
       address_count = load_contract_addresses()
-      {:ok, %{protocols: protocol_count, addresses: address_count}}
+      app_settings_count = load_app_settings()
+      {:ok, %{protocols: protocol_count, addresses: address_count, app_settings: app_settings_count}}
     rescue
       e -> {:error, e}
     end
@@ -232,5 +272,17 @@ defmodule AnomaExplorer.Settings.Cache do
     end)
 
     length(addresses)
+  end
+
+  defp load_app_settings do
+    alias AnomaExplorer.Repo
+
+    settings = Repo.all(AppSetting)
+
+    Enum.each(settings, fn setting ->
+      put_app_setting(setting.key, setting.value)
+    end)
+
+    length(settings)
   end
 end
