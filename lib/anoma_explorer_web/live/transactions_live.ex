@@ -216,11 +216,7 @@ defmodule AnomaExplorerWeb.TransactionsLive do
   end
 
   defp load_transactions(socket) do
-    if not Client.configured?() do
-      socket
-      |> assign(:configured, false)
-      |> assign(:loading, false)
-    else
+    if Client.configured?() do
       offset = socket.assigns.page * @page_size
       filters = socket.assigns.filters
 
@@ -249,6 +245,10 @@ defmodule AnomaExplorerWeb.TransactionsLive do
           |> assign(:loading, false)
           |> assign(:error, format_error(reason))
       end
+    else
+      socket
+      |> assign(:configured, false)
+      |> assign(:loading, false)
     end
   end
 

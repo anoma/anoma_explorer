@@ -90,7 +90,7 @@ defmodule AnomaExplorerWeb.HomeLive do
      |> assign(:configured, Client.configured?())
      |> assign(:loading, true)
      |> assign(:connection_status, nil)
-     |> then(fn s -> send(self(), :check_connection); s end)}
+     |> tap(fn _ -> send(self(), :check_connection) end)}
   end
 
   @impl true
@@ -167,11 +167,7 @@ defmodule AnomaExplorerWeb.HomeLive do
   end
 
   defp load_dashboard_data(socket) do
-    if not Client.configured?() do
-      socket
-      |> assign(:configured, false)
-      |> assign(:loading, false)
-    else
+    if Client.configured?() do
       # Run stats and transactions queries in parallel for faster loading
       stats_task = Task.async(fn -> GraphQL.get_stats() end)
       txs_task = Task.async(fn -> GraphQL.list_transactions(limit: 10) end)
@@ -200,6 +196,10 @@ defmodule AnomaExplorerWeb.HomeLive do
           |> assign(:loading, false)
           |> assign(:error, format_error(reason))
       end
+    else
+      socket
+      |> assign(:configured, false)
+      |> assign(:loading, false)
     end
   end
 

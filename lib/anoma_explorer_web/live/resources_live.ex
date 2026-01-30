@@ -193,11 +193,7 @@ defmodule AnomaExplorerWeb.ResourcesLive do
   end
 
   defp load_resources(socket) do
-    if not Client.configured?() do
-      socket
-      |> assign(:configured, false)
-      |> assign(:loading, false)
-    else
+    if Client.configured?() do
       offset = socket.assigns.page * @page_size
       filters = socket.assigns.filters
 
@@ -228,6 +224,10 @@ defmodule AnomaExplorerWeb.ResourcesLive do
           |> assign(:loading, false)
           |> assign(:error, format_error(reason))
       end
+    else
+      socket
+      |> assign(:configured, false)
+      |> assign(:loading, false)
     end
   end
 
