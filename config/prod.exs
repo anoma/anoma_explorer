@@ -6,9 +6,13 @@ import Config
 # which you should run after static files are built and
 # before starting your production server.
 config :anoma_explorer, AnomaExplorerWeb.Endpoint,
-  cache_static_manifest: "priv/static/cache_manifest.json"
+  cache_static_manifest: "priv/static/cache_manifest.json",
+  # Compile-time placeholder for force_ssl - actual value set in runtime.exs
+  # via FORCE_SSL env var. This placeholder is required because Phoenix
+  # validates that force_ssl exists at compile time.
+  force_ssl: [rewrite_on: [:x_forwarded_proto]]
 
-# SSL/HTTPS redirect is now configured via FORCE_SSL environment variable
+# SSL/HTTPS redirect is configured via FORCE_SSL environment variable
 # in config/runtime.exs. Defaults to enabled (true) for security.
 # Set FORCE_SSL=false to disable HTTPS redirect (e.g., when behind a proxy
 # that handles TLS termination, or for health check endpoints).
