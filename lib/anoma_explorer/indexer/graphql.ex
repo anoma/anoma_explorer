@@ -1010,7 +1010,6 @@ defmodule AnomaExplorer.Indexer.GraphQL do
 
   @doc false
   # Default HTTP client implementation using :httpc
-  # Note: SSL options simplified for OTP 28 compatibility
   def post_graphql(url, query, timeout, connect_timeout) do
     :inets.start()
     :ssl.start()
@@ -1018,11 +1017,10 @@ defmodule AnomaExplorer.Indexer.GraphQL do
     body = Jason.encode!(%{query: query})
     request = {to_charlist(url), [{~c"content-type", ~c"application/json"}], ~c"application/json", body}
 
-    # Simplified SSL options for OTP 28
     http_options = [
       timeout: timeout,
       connect_timeout: connect_timeout,
-      ssl: [verify: :verify_none]
+      ssl: ssl_options()
     ]
 
     case :httpc.request(:post, request, http_options, [body_format: :binary]) do
@@ -1060,11 +1058,10 @@ defmodule AnomaExplorer.Indexer.GraphQL do
     body = Jason.encode!(%{query: query})
     request = {to_charlist(url), [{~c"content-type", ~c"application/json"}], ~c"application/json", body}
 
-    # Simplified SSL options for OTP 28
     http_options = [
       timeout: timeout,
       connect_timeout: connect_timeout,
-      ssl: [verify: :verify_none]
+      ssl: ssl_options()
     ]
 
     case :httpc.request(:post, request, http_options, [body_format: :binary]) do
@@ -1082,6 +1079,17 @@ defmodule AnomaExplorer.Indexer.GraphQL do
 
       {:error, reason} ->
         {:error, {:connection_error, reason}}
+    end
+  end
+
+  # Returns SSL options based on configuration
+  # SSL_VERIFY=true enables certificate verification (recommended for production)
+  # SSL_VERIFY=false (default) disables verification (convenient for development)
+  defp ssl_options do
+    if Application.get_env(:anoma_explorer, :ssl_verify, false) do
+      [verify: :verify_peer, cacerts: :public_key.cacerts_get(), depth: 3]
+    else
+      [verify: :verify_none]
     end
   end
 end

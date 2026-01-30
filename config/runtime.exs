@@ -28,6 +28,11 @@ if envio_graphql_url = System.get_env("ENVIO_GRAPHQL_URL") do
   config :anoma_explorer, :envio_graphql_url, envio_graphql_url
 end
 
+# SSL verification for GraphQL client requests
+# Set to "true" to enable certificate verification (recommended for production)
+# Default: false (disabled for development convenience)
+config :anoma_explorer, :ssl_verify, System.get_env("SSL_VERIFY", "false") == "true"
+
 # Chain explorer API key for contract verification
 # Etherscan V2 API uses a single key for all supported chains
 if etherscan_api_key = System.get_env("ETHERSCAN_API_KEY") do
