@@ -211,7 +211,6 @@ defmodule AnomaExplorerWeb.CompliancesLive do
     end
   end
 
-
   @impl true
   def render(assigns) do
     ~H"""

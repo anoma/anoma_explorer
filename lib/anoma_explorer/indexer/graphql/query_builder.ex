@@ -207,7 +207,7 @@ defmodule AnomaExplorer.Indexer.GraphQL.QueryBuilder do
     or_parts = Enum.map(clauses, fn {field, op, value} ->
       build_condition({field, op, value})
     end)
-    "_or: [#{Enum.map(or_parts, fn p -> "{#{p}}" end) |> Enum.join(", ")}]"
+    "_or: [#{Enum.map_join(or_parts, ", ", fn p -> "{#{p}}" end)}]"
   end
 
   # Nested filters for relationship fields (e.g., evmTransaction: {txHash: {_ilike: "%0x%"}})

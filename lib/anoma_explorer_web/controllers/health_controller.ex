@@ -48,11 +48,9 @@ defmodule AnomaExplorerWeb.HealthController do
   end
 
   defp check_database do
-    try do
-      Repo.query!("SELECT 1")
-      :ok
-    rescue
-      e -> {:error, e}
-    end
+    Repo.query!("SELECT 1")
+    :ok
+  rescue
+    e -> {:error, e}
   end
 end

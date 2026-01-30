@@ -205,7 +205,6 @@ defmodule AnomaExplorerWeb.NullifiersLive do
     end
   end
 
-
   @impl true
   def render(assigns) do
     ~H"""

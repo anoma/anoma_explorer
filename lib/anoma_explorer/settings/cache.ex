@@ -312,22 +312,20 @@ defmodule AnomaExplorer.Settings.Cache do
   end
 
   defp load_all_data do
-    try do
-      protocol_count = load_protocols()
-      address_count = load_contract_addresses()
-      app_settings_count = load_app_settings()
-      network_count = load_networks()
+    protocol_count = load_protocols()
+    address_count = load_contract_addresses()
+    app_settings_count = load_app_settings()
+    network_count = load_networks()
 
-      {:ok,
-       %{
-         protocols: protocol_count,
-         addresses: address_count,
-         app_settings: app_settings_count,
-         networks: network_count
-       }}
-    rescue
-      e -> {:error, e}
-    end
+    {:ok,
+     %{
+       protocols: protocol_count,
+       addresses: address_count,
+       app_settings: app_settings_count,
+       networks: network_count
+     }}
+  rescue
+    e -> {:error, e}
   end
 
   defp load_protocols do
