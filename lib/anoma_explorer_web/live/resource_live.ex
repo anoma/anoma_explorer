@@ -237,24 +237,6 @@ defmodule AnomaExplorerWeb.ResourceLive do
   defp payload_kind_tooltip("resource"), do: "Resource payload - encoded resource data"
   defp payload_kind_tooltip(_), do: ""
 
-  defp field_row(assigns) do
-    assigns = assign_new(assigns, :copyable, fn -> false end)
-
-    ~H"""
-    <div>
-      <div class="text-xs text-base-content/60 uppercase tracking-wide mb-1">{@label}</div>
-      <%= if @value do %>
-        <div class="flex items-center gap-2">
-          <code class="hash-display text-sm break-all">{Formatting.truncate_value(@value)}</code>
-          <.copy_button :if={@copyable and is_binary(@value)} text={@value} />
-        </div>
-      <% else %>
-        <span class="text-base-content/40">-</span>
-      <% end %>
-    </div>
-    """
-  end
-
   defp raw_blob_section(assigns) do
     ~H"""
     <div class="stat-card mb-6">
