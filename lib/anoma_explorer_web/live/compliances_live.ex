@@ -9,7 +9,6 @@ defmodule AnomaExplorerWeb.CompliancesLive do
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Client
   alias AnomaExplorer.Indexer.Networks
-  alias AnomaExplorer.Settings
   alias AnomaExplorer.Utils.Formatting
 
   alias AnomaExplorerWeb.Live.Helpers.SharedHandlers
@@ -251,7 +250,7 @@ defmodule AnomaExplorerWeb.CompliancesLive do
         <% match?({:error, _}, @connection_status) -> %>
           <IndexerSetupComponents.connection_error
             error={elem(@connection_status, 1)}
-            url={Settings.get_envio_url()}
+            url={@setup_url_input}
           />
         <% true -> %>
           <%= if @error do %>

@@ -239,7 +239,7 @@ defmodule AnomaExplorerWeb.HomeLive do
         <% match?({:error, _}, @connection_status) -> %>
           <IndexerSetupComponents.connection_error
             error={elem(@connection_status, 1)}
-            url={Settings.get_envio_url()}
+            url={@setup_url_input}
           />
         <% true -> %>
           <%= if @error do %>

@@ -8,7 +8,6 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Client
   alias AnomaExplorerWeb.IndexerSetupComponents
-  alias AnomaExplorer.Settings
   alias AnomaExplorerWeb.Live.Helpers.SetupHandlers
 
   @default_query """
@@ -473,7 +472,7 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
         <% match?({:error, _}, @connection_status) -> %>
           <IndexerSetupComponents.connection_error
             error={elem(@connection_status, 1)}
-            url={Settings.get_envio_url()}
+            url={@setup_url_input}
           />
         <% true -> %>
           <.action_bar templates={@templates} loading={@loading} />

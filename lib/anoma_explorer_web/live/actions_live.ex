@@ -12,7 +12,6 @@ defmodule AnomaExplorerWeb.ActionsLive do
 
   alias AnomaExplorerWeb.Live.Helpers.SharedHandlers
   alias AnomaExplorerWeb.IndexerSetupComponents
-  alias AnomaExplorer.Settings
   alias AnomaExplorerWeb.Live.Helpers.SetupHandlers
   import AnomaExplorerWeb.Live.Helpers.FilterHelpers
 
@@ -253,7 +252,7 @@ defmodule AnomaExplorerWeb.ActionsLive do
         <% match?({:error, _}, @connection_status) -> %>
           <IndexerSetupComponents.connection_error
             error={elem(@connection_status, 1)}
-            url={Settings.get_envio_url()}
+            url={@setup_url_input}
           />
         <% true -> %>
           <%= if @error do %>
