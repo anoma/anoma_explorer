@@ -219,8 +219,8 @@ defmodule AnomaExplorerWeb.HomeLive do
         </div>
         <div class="flex items-center gap-2">
           <%= if @last_updated do %>
-            <span class="text-xs text-base-content/70">
-              Updated {Formatting.format_time(@last_updated)}
+            <span class="text-xs text-base-content/70" title={Formatting.format_time(@last_updated)}>
+              Updated {Formatting.format_relative(@last_updated)}
             </span>
           <% end %>
           <button
@@ -677,25 +677,34 @@ defmodule AnomaExplorerWeb.HomeLive do
                           <% end %>
                         </td>
                         <td>
-                          <div class="flex flex-col sm:flex-row sm:items-center gap-1">
-                            <code class="hash-display text-xs">{Formatting.truncate_hash(tag)}</code>
-                            <.copy_button
-                              :if={tag}
-                              text={tag}
-                              tooltip="Copy tag"
-                              class="hidden sm:inline-flex"
-                            />
-                            <span class="text-xs text-base-content/50 sm:hidden">
-                              Logic: {Formatting.truncate_hash(logic_ref)}
+                          <div class="flex flex-col gap-1">
+                            <div class="flex items-start gap-1">
+                              <code class="hash-display text-xs break-all leading-relaxed max-w-[280px]">
+                                {tag}
+                              </code>
+                              <.copy_button
+                                :if={tag}
+                                text={tag}
+                                tooltip="Copy tag"
+                                class="shrink-0"
+                              />
+                            </div>
+                            <span class="text-xs text-base-content/70 sm:hidden break-all">
+                              Logic: {logic_ref}
                             </span>
                           </div>
                         </td>
                         <td class="hidden sm:table-cell">
-                          <div class="flex items-center gap-1">
-                            <code class="hash-display text-xs">
-                              {Formatting.truncate_hash(logic_ref)}
+                          <div class="flex items-start gap-1">
+                            <code class="hash-display text-xs break-all leading-relaxed max-w-[280px]">
+                              {logic_ref}
                             </code>
-                            <.copy_button :if={logic_ref} text={logic_ref} tooltip="Copy logic ref" />
+                            <.copy_button
+                              :if={logic_ref}
+                              text={logic_ref}
+                              tooltip="Copy logic ref"
+                              class="shrink-0"
+                            />
                           </div>
                         </td>
                       </tr>
