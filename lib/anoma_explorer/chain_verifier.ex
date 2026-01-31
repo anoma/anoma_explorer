@@ -121,11 +121,23 @@ defmodule AnomaExplorer.ChainVerifier do
         {:ok, false}
 
       {:ok, %{"error" => error}} ->
-        Logger.warning("Chain verifier API error: #{inspect(error)}")
+        Logger.warning(fn ->
+          """
+          Chain verifier API error
+            error: #{inspect(error, pretty: true)}
+          """
+        end)
+
         {:error, error}
 
       {:error, reason} ->
-        Logger.warning("Chain verifier HTTP error: #{inspect(reason)}")
+        Logger.warning(fn ->
+          """
+          Chain verifier HTTP error
+            reason: #{inspect(reason, pretty: true)}
+          """
+        end)
+
         {:error, reason}
     end
   end
@@ -148,7 +160,13 @@ defmodule AnomaExplorer.ChainVerifier do
         end
 
       {:ok, response} ->
-        Logger.warning("Unexpected verification response: #{inspect(response)}")
+        Logger.warning(fn ->
+          """
+          Unexpected verification response
+            #{inspect(response, pretty: true)}
+          """
+        end)
+
         {:ok, :unverified}
 
       {:error, reason} ->

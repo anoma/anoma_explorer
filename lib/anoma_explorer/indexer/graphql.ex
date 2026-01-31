@@ -1038,23 +1038,47 @@ defmodule AnomaExplorer.Indexer.GraphQL do
             {:ok, data}
 
           {:ok, %{"errors" => errors}} ->
-            Logger.warning("GraphQL query returned errors", errors: errors)
+            Logger.warning(fn ->
+              """
+              GraphQL query returned errors
+                #{inspect(errors, pretty: true, limit: :infinity)}
+              """
+            end)
+
             {:error, {:graphql_error, errors}}
 
           {:error, reason} ->
-            Logger.error("Failed to decode GraphQL response", reason: inspect(reason))
+            Logger.error(fn ->
+              """
+              Failed to decode GraphQL response
+                reason: #{inspect(reason, pretty: true)}
+              """
+            end)
+
             {:error, {:decode_error, reason}}
         end
 
       {:ok, {{_http_version, status, _reason}, _headers, response_body}} ->
-        Logger.error(
-          "GraphQL HTTP error: status=#{status}, body=#{String.slice(to_string(response_body), 0, 200)}"
-        )
+        Logger.error(fn ->
+          body_preview = response_body |> to_string() |> String.slice(0, 500)
+
+          """
+          GraphQL HTTP error
+            status: #{status}
+            body: #{body_preview}
+          """
+        end)
 
         {:error, {:http_error, status, response_body}}
 
       {:error, reason} ->
-        Logger.error("GraphQL connection error", reason: inspect(reason))
+        Logger.error(fn ->
+          """
+          GraphQL connection error
+            reason: #{inspect(reason, pretty: true)}
+          """
+        end)
+
         {:error, {:connection_error, reason}}
     end
   end

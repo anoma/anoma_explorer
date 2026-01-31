@@ -17,6 +17,8 @@ defmodule AnomaExplorerWeb.Live.Helpers.SharedHandlers do
 
   alias AnomaExplorer.Indexer.Networks
 
+  require Logger
+
   @doc """
   Handles showing chain information in a modal.
 
@@ -65,6 +67,15 @@ defmodule AnomaExplorerWeb.Live.Helpers.SharedHandlers do
   def handle_show_resources(socket, tx_id, tags_json, logic_refs_json) do
     tags = Jason.decode!(tags_json)
     logic_refs = Jason.decode!(logic_refs_json)
+
+    Logger.debug(fn ->
+      """
+      show_resources event
+        tx_id: #{tx_id}
+        tags: #{inspect(tags, pretty: true)}
+        logic_refs: #{inspect(logic_refs, pretty: true)}
+      """
+    end)
 
     Phoenix.Component.assign(socket, :selected_resources, %{
       tx_id: tx_id,

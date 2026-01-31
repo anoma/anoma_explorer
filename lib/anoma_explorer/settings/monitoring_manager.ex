@@ -55,12 +55,14 @@ defmodule AnomaExplorer.Settings.MonitoringManager do
 
   @impl true
   def handle_info(:init_monitoring, state) do
-    Logger.info("[MonitoringManager] Initializing tracking for active contracts")
+    Logger.info("MonitoringManager initializing tracking for active contracts")
 
     active_addresses = Settings.list_active_addresses()
     monitored = MapSet.new(active_addresses, &address_key/1)
 
-    Logger.info("[MonitoringManager] Tracking #{MapSet.size(monitored)} active addresses")
+    Logger.info("MonitoringManager ready",
+      tracked_addresses: MapSet.size(monitored)
+    )
 
     {:noreply, %{state | monitored: monitored}}
   end
@@ -70,7 +72,7 @@ defmodule AnomaExplorer.Settings.MonitoringManager do
     new_state =
       if address.active do
         key = address_key(address)
-        Logger.debug("[MonitoringManager] New active address: #{inspect(key)}")
+        Logger.debug(fn -> "MonitoringManager: new active address\n#{format_address_key(key)}" end)
         %{state | monitored: MapSet.put(state.monitored, key)}
       else
         state
@@ -86,11 +88,11 @@ defmodule AnomaExplorer.Settings.MonitoringManager do
     new_state =
       cond do
         address.active and not MapSet.member?(state.monitored, key) ->
-          Logger.debug("[MonitoringManager] Address activated: #{inspect(key)}")
+          Logger.debug(fn -> "MonitoringManager: address activated\n#{format_address_key(key)}" end)
           %{state | monitored: MapSet.put(state.monitored, key)}
 
         not address.active and MapSet.member?(state.monitored, key) ->
-          Logger.debug("[MonitoringManager] Address deactivated: #{inspect(key)}")
+          Logger.debug(fn -> "MonitoringManager: address deactivated\n#{format_address_key(key)}" end)
           %{state | monitored: MapSet.delete(state.monitored, key)}
 
         true ->
@@ -106,7 +108,7 @@ defmodule AnomaExplorer.Settings.MonitoringManager do
 
     new_state =
       if MapSet.member?(state.monitored, key) do
-        Logger.debug("[MonitoringManager] Address deleted: #{inspect(key)}")
+        Logger.debug(fn -> "MonitoringManager: address deleted\n#{format_address_key(key)}" end)
         %{state | monitored: MapSet.delete(state.monitored, key)}
       else
         state
@@ -142,5 +144,14 @@ defmodule AnomaExplorer.Settings.MonitoringManager do
 
   defp address_key(address) do
     {address.protocol_id, address.category, address.version, address.network}
+  end
+
+  defp format_address_key({protocol_id, category, version, network}) do
+    """
+      protocol_id: #{protocol_id}
+      category: #{category}
+      version: #{version}
+      network: #{network}\
+    """
   end
 end

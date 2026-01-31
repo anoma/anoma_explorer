@@ -285,7 +285,12 @@ defmodule AnomaExplorer.Settings.Cache do
         )
 
       {:error, reason} ->
-        Logger.error("Failed to initialize settings cache", reason: inspect(reason))
+        Logger.error(fn ->
+          """
+          Failed to initialize settings cache
+            reason: #{inspect(reason, pretty: true)}
+          """
+        end)
     end
 
     {:ok, %{table: table}}
