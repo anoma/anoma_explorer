@@ -68,6 +68,8 @@ defmodule AnomaExplorer.MixProject do
       {:telemetry_poller, "~> 1.3.0"},
       {:gettext, "~> 0.26 or ~> 1.0"},
       {:jason, "~> 1.4"},
+      # WebSocket client for GraphQL subscriptions
+      {:websockex, "~> 0.4.3"},
       # HTTP server
       {:plug_cowboy, "~> 2.7"},
       # Testing

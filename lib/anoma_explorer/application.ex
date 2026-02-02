@@ -17,6 +17,8 @@ defmodule AnomaExplorer.Application do
       AnomaExplorer.Settings.Cache,
       # Contract monitoring manager (reacts to settings changes)
       AnomaExplorer.Settings.MonitoringManager,
+      # WebSocket subscriber for real-time stats updates (isolated supervisor with relaxed restarts)
+      AnomaExplorer.Indexer.StatsSupervisor,
       # Start to serve requests, typically the last entry
       AnomaExplorerWeb.Endpoint
     ]

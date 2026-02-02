@@ -1,6 +1,9 @@
 defmodule AnomaExplorerWeb.HomeLive do
   @moduledoc """
   Dashboard LiveView showing stats and recent transactions from the Envio indexer.
+
+  Supports real-time updates via WebSocket subscription when available,
+  with polling as fallback.
   """
   use AnomaExplorerWeb, :live_view
 
@@ -8,6 +11,7 @@ defmodule AnomaExplorerWeb.HomeLive do
   alias AnomaExplorer.Indexer.Client
   alias AnomaExplorer.Indexer.GraphQL
   alias AnomaExplorer.Indexer.Networks
+  alias AnomaExplorer.Indexer.StatsSubscriber
   alias AnomaExplorer.Settings
   alias AnomaExplorer.Utils.Formatting
 
@@ -16,13 +20,19 @@ defmodule AnomaExplorerWeb.HomeLive do
   alias AnomaExplorerWeb.Live.Helpers.SetupHandlers
   alias AnomaExplorerWeb.Live.Helpers.SharedHandlers
 
+  # Polling interval - used as fallback when WebSocket is unavailable
+  # When WebSocket is connected, we still do occasional full refreshes (every 30s)
+  # as a fallback to catch any missed updates
   @refresh_interval 5_000
 
   @impl true
   def mount(_params, _session, socket) do
     if connected?(socket) do
       Settings.subscribe()
+      # Subscribe to real-time updates from StatsSubscriber
+      Phoenix.PubSub.subscribe(AnomaExplorer.PubSub, StatsSubscriber.topic())
       send(self(), :check_connection)
+      # Start with normal refresh, will adjust based on WebSocket availability
       :timer.send_interval(@refresh_interval, self(), :refresh)
     end
 
@@ -36,6 +46,7 @@ defmodule AnomaExplorerWeb.HomeLive do
      |> assign(:configured, Client.configured?())
      |> assign(:connection_status, nil)
      |> assign(:last_updated, nil)
+     |> assign(:realtime_connected, false)
      |> assign(:selected_chain, nil)
      |> assign(:selected_resources, nil)
      |> SetupHandlers.init_setup_assigns()}
@@ -48,7 +59,13 @@ defmodule AnomaExplorerWeb.HomeLive do
       case Client.test_connection() do
         {:ok, _} ->
           socket = load_dashboard_data(socket)
-          {:noreply, assign(socket, :connection_status, :ok)}
+          # Check if WebSocket subscriber is connected for real-time updates
+          realtime = StatsSubscriber.connected?()
+
+          {:noreply,
+           socket
+           |> assign(:connection_status, :ok)
+           |> assign(:realtime_connected, realtime)}
 
         {:error, reason} ->
           {:noreply,
@@ -66,13 +83,33 @@ defmodule AnomaExplorerWeb.HomeLive do
 
   @impl true
   def handle_info(:refresh, socket) do
-    if socket.assigns.configured and socket.assigns.connection_status == :ok do
-      socket = load_dashboard_data(socket)
-      {:noreply, socket}
-    else
-      # Re-check connection on refresh if not working
-      send(self(), :check_connection)
-      {:noreply, socket}
+    cond do
+      not socket.assigns.configured or socket.assigns.connection_status != :ok ->
+        # Re-check connection on refresh if not working
+        send(self(), :check_connection)
+        {:noreply, socket}
+
+      socket.assigns.realtime_connected ->
+        # WebSocket is providing real-time updates, just update connection status
+        # Do a full refresh less frequently as a fallback (every 6th refresh = 30s)
+        refresh_count = Map.get(socket.assigns, :refresh_count, 0)
+
+        if rem(refresh_count, 6) == 0 do
+          # Occasional full refresh to catch any missed updates
+          socket = load_dashboard_data(socket)
+          {:noreply, assign(socket, :refresh_count, refresh_count + 1)}
+        else
+          # Skip HTTP request, rely on WebSocket
+          {:noreply,
+           socket
+           |> assign(:refresh_count, refresh_count + 1)
+           |> assign(:realtime_connected, StatsSubscriber.connected?())}
+        end
+
+      true ->
+        # No WebSocket, use polling
+        socket = load_dashboard_data(socket)
+        {:noreply, socket}
     end
   end
 
@@ -96,6 +133,29 @@ defmodule AnomaExplorerWeb.HomeLive do
 
   @impl true
   def handle_info({:settings_changed, _}, socket), do: {:noreply, socket}
+
+  # Real-time stats update from StatsSubscriber WebSocket
+  @impl true
+  def handle_info({:stats_updated, stats}, socket) do
+    {:noreply,
+     socket
+     |> assign(:stats, stats)
+     |> assign(:last_updated, DateTime.utc_now())
+     |> assign(:realtime_connected, true)
+     |> assign(:loading, false)
+     |> assign(:error, nil)}
+  end
+
+  # Real-time transactions update from StatsSubscriber WebSocket
+  @impl true
+  def handle_info({:transactions_updated, transactions}, socket) do
+    {:noreply,
+     socket
+     |> assign(:transactions, transactions)
+     |> assign(:last_updated, DateTime.utc_now())
+     |> assign(:realtime_connected, true)
+     |> assign(:loading, false)}
+  end
 
   @impl true
   def handle_event("refresh", _params, socket) do
