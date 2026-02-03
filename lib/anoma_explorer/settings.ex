@@ -381,8 +381,6 @@ defmodule AnomaExplorer.Settings do
   # App Settings (Key-Value Store)
   # ============================================
 
-  @envio_url_key "envio_graphql_url"
-
   @doc """
   Gets an app setting by key.
   Uses ETS cache for fast lookups, falling back to database if not cached.
@@ -453,30 +451,12 @@ defmodule AnomaExplorer.Settings do
   end
 
   @doc """
-  Gets the Envio GraphQL URL.
-  Falls back to env var if not set in database.
+  Gets the Envio GraphQL URL from environment variable.
+  Configured via ENVIO_GRAPHQL_URL env var at deployment time.
   """
   @spec get_envio_url() :: String.t() | nil
   def get_envio_url do
-    get_app_setting(@envio_url_key) ||
-      Application.get_env(:anoma_explorer, :envio_graphql_url)
-  end
-
-  @doc """
-  Sets the Envio GraphQL URL.
-  Clears the indexer cache to ensure fresh data is fetched with the new endpoint.
-  """
-  @spec set_envio_url(String.t()) :: {:ok, AppSetting.t()} | {:error, Ecto.Changeset.t()}
-  def set_envio_url(url) do
-    result = set_app_setting(@envio_url_key, url, "Envio Hyperindex GraphQL endpoint URL")
-
-    # Clear cache on URL change so queries use the new endpoint immediately
-    case result do
-      {:ok, _} -> AnomaExplorer.Indexer.Cache.clear()
-      _ -> :ok
-    end
-
-    result
+    Application.get_env(:anoma_explorer, :envio_graphql_url)
   end
 
   # ============================================

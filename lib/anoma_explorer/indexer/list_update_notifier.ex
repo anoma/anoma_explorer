@@ -166,9 +166,7 @@ defmodule AnomaExplorer.Indexer.ListUpdateNotifier do
   defp broadcast_new_items(entity, added) do
     topic = topic(entity)
 
-    Logger.debug(
-      "ListUpdateNotifier: Broadcasting #{added} new #{entity} to #{topic}"
-    )
+    Logger.debug("ListUpdateNotifier: Broadcasting #{added} new #{entity} to #{topic}")
 
     Phoenix.PubSub.broadcast(
       @pubsub,

@@ -5,8 +5,6 @@ defmodule AnomaExplorer.Indexer.GraphQLTest do
   use AnomaExplorer.DataCase, async: false
 
   alias AnomaExplorer.Indexer.GraphQL
-  alias AnomaExplorer.Settings.AppSetting
-  alias AnomaExplorer.Settings.Cache, as: SettingsCache
 
   import Mox
 
@@ -617,20 +615,12 @@ defmodule AnomaExplorer.Indexer.GraphQLTest do
   # Helper functions
 
   defp insert_envio_url(url) do
-    setting =
-      Repo.insert!(
-        %AppSetting{key: "envio_graphql_url", value: url},
-        on_conflict: {:replace, [:value]},
-        conflict_target: :key
-      )
-
-    SettingsCache.put_app_setting("envio_graphql_url", url)
-    setting
+    # Set via Application config (simulates ENVIO_GRAPHQL_URL env var)
+    Application.put_env(:anoma_explorer, :envio_graphql_url, url)
+    url
   end
 
   defp clear_envio_url do
-    Repo.delete_all(AppSetting)
-    SettingsCache.delete_app_setting("envio_graphql_url")
     Application.delete_env(:anoma_explorer, :envio_graphql_url)
   end
 end

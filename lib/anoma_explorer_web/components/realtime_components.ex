@@ -66,8 +66,7 @@ defmodule AnomaExplorerWeb.RealtimeComponents do
         phx-click="refresh_list"
         class="btn btn-xs btn-ghost hover:bg-primary-content/20 gap-1"
       >
-        <.icon name="hero-arrow-path" class="w-3 h-3" />
-        Refresh
+        <.icon name="hero-arrow-path" class="w-3 h-3" /> Refresh
       </button>
 
       <%!-- Dismiss button --%>

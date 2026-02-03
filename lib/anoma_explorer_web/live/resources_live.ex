@@ -206,18 +206,8 @@ defmodule AnomaExplorerWeb.ResourcesLive do
 
   @impl true
   def handle_event("setup_save_url", %{"url" => url}, socket) do
-    case SetupHandlers.handle_save_url(socket, url) do
-      {:ok, socket} ->
-        send(self(), :check_connection)
-
-        {:noreply,
-         socket
-         |> assign(:configured, true)
-         |> assign(:loading, true)}
-
-      {:error, socket} ->
-        {:noreply, socket}
-    end
+    {:error, socket} = SetupHandlers.handle_save_url(socket, url)
+    {:noreply, socket}
   end
 
   defp load_resources(socket) do

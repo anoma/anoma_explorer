@@ -155,13 +155,8 @@ defmodule AnomaExplorerWeb.PlaygroundLive do
 
   @impl true
   def handle_event("setup_save_url", %{"url" => url}, socket) do
-    case SetupHandlers.handle_save_url(socket, url) do
-      {:ok, socket} ->
-        {:noreply, assign(socket, :configured, true)}
-
-      {:error, socket} ->
-        {:noreply, socket}
-    end
+    {:error, socket} = SetupHandlers.handle_save_url(socket, url)
+    {:noreply, socket}
   end
 
   @impl true

@@ -74,6 +74,9 @@ defmodule AnomaExplorer.Indexer.StatsSubscriber do
   Returns {:ok, pid} or :ignore if not configured.
   """
   def start_link(opts \\ []) do
+    # Debug: Log environment configuration
+    log_debug_config()
+
     case get_websocket_url() do
       {:ok, url} ->
         Logger.info("StatsSubscriber: Starting WebSocket connection to #{url}")
@@ -92,9 +95,7 @@ defmodule AnomaExplorer.Indexer.StatsSubscriber do
         old_trap = Process.flag(:trap_exit, true)
 
         result =
-          WebSockex.start_link(url, __MODULE__, state,
-            name: Keyword.get(opts, :name, __MODULE__)
-          )
+          WebSockex.start_link(url, __MODULE__, state, name: Keyword.get(opts, :name, __MODULE__))
 
         # Check for immediate exit from the WebSockex process
         receive do
@@ -417,5 +418,18 @@ defmodule AnomaExplorer.Indexer.StatsSubscriber do
 
         {:ok, ws_url}
     end
+  end
+
+  defp log_debug_config do
+    envio_url = Settings.get_envio_url()
+    env_envio_url = Application.get_env(:anoma_explorer, :envio_graphql_url)
+    system_env = System.get_env("ENVIO_GRAPHQL_URL")
+
+    Logger.info("""
+    StatsSubscriber: Environment configuration:
+      - Settings.get_envio_url(): #{inspect(envio_url)}
+      - Application config :envio_graphql_url: #{inspect(env_envio_url)}
+      - System env ENVIO_GRAPHQL_URL: #{inspect(system_env)}
+    """)
   end
 end

@@ -96,25 +96,18 @@ defmodule AnomaExplorerWeb.Live.Helpers.SetupHandlers do
 
   @doc """
   Handles save URL action.
-  Returns {:ok, socket} on success, {:error, socket} on failure.
+  Note: URL configuration is now done via ENVIO_GRAPHQL_URL environment variable.
+  This function now returns an error explaining the new configuration method.
   """
   @spec handle_save_url(Phoenix.LiveView.Socket.t(), String.t()) ::
-          {:ok, Phoenix.LiveView.Socket.t()} | {:error, Phoenix.LiveView.Socket.t()}
-  def handle_save_url(socket, url) do
-    socket = Phoenix.Component.assign(socket, :setup_saving, true)
-
-    case Settings.set_envio_url(url) do
-      {:ok, _} ->
-        {:ok,
-         socket
-         |> Phoenix.Component.assign(:setup_saving, false)
-         |> Phoenix.LiveView.put_flash(:info, "Indexer endpoint saved successfully")}
-
-      {:error, _} ->
-        {:error,
-         socket
-         |> Phoenix.Component.assign(:setup_saving, false)
-         |> Phoenix.LiveView.put_flash(:error, "Failed to save endpoint")}
-    end
+          {:error, Phoenix.LiveView.Socket.t()}
+  def handle_save_url(socket, _url) do
+    {:error,
+     socket
+     |> Phoenix.Component.assign(:setup_saving, false)
+     |> Phoenix.LiveView.put_flash(
+       :error,
+       "Configuration via web UI is disabled. Set ENVIO_GRAPHQL_URL environment variable in your deployment platform."
+     )}
   end
 end

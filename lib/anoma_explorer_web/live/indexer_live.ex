@@ -1,87 +1,39 @@
 defmodule AnomaExplorerWeb.IndexerLive do
   @moduledoc """
-  LiveView for configuring the Envio Hyperindex GraphQL endpoint.
+  LiveView for displaying the Envio Hyperindex GraphQL endpoint configuration.
+  The endpoint is configured via the ENVIO_GRAPHQL_URL environment variable.
   """
   use AnomaExplorerWeb, :live_view
 
   alias AnomaExplorer.Indexer.Client
   alias AnomaExplorer.Settings
 
-  alias AnomaExplorerWeb.AdminAuth
   alias AnomaExplorerWeb.Layouts
-
-  on_mount {AdminAuth, :load_admin_state}
 
   @impl true
   def mount(_params, _session, socket) do
-    if connected?(socket), do: Settings.subscribe()
-
     url = Settings.get_envio_url() || ""
+    status = if url != "", do: Client.test_connection(url), else: nil
 
     {:ok,
      socket
      |> assign(:page_title, "Indexer Settings")
      |> assign(:url, url)
-     |> assign(:url_input, url)
-     |> assign(:status, nil)
-     |> assign(:saving, false)
-     |> assign(:auto_test_timer, nil)
-     |> assign(:auto_testing, false)}
+     |> assign(:status, status)
+     |> assign(:testing, false)}
   end
 
-  # Admin authorization events
   @impl true
-  def handle_event(event, params, socket)
-      when event in ~w(admin_show_unlock_modal admin_close_unlock_modal admin_verify_secret admin_logout) do
-    case AdminAuth.handle_event(event, params, socket) do
-      {:handled, socket} -> {:noreply, socket}
-      :not_handled -> {:noreply, socket}
+  def handle_event("test_connection", _params, socket) do
+    url = socket.assigns.url
+
+    if url != "" do
+      socket = assign(socket, :testing, true)
+      send(self(), :do_test_connection)
+      {:noreply, socket}
+    else
+      {:noreply, socket}
     end
-  end
-
-  @impl true
-  def handle_event("update_url", %{"url" => url}, socket) do
-    # Cancel any pending auto-test timer
-    if socket.assigns.auto_test_timer do
-      Process.cancel_timer(socket.assigns.auto_test_timer)
-    end
-
-    # Schedule auto-test after 2 seconds of inactivity
-    timer =
-      if url != "" do
-        Process.send_after(self(), {:auto_test_connection, url}, 2000)
-      else
-        nil
-      end
-
-    {:noreply,
-     socket
-     |> assign(:url_input, url)
-     |> assign(:status, nil)
-     |> assign(:auto_test_timer, timer)
-     |> assign(:auto_testing, url != "")}
-  end
-
-  @impl true
-  def handle_event("save_url", %{"url" => url}, socket) do
-    AdminAuth.require_admin(socket, fn ->
-      socket = assign(socket, :saving, true)
-
-      case Settings.set_envio_url(url) do
-        {:ok, _} ->
-          {:noreply,
-           socket
-           |> assign(:url, url)
-           |> assign(:saving, false)
-           |> put_flash(:info, "Indexer endpoint saved successfully")}
-
-        {:error, _} ->
-          {:noreply,
-           socket
-           |> assign(:saving, false)
-           |> put_flash(:error, "Failed to save endpoint")}
-      end
-    end)
   end
 
   @impl true
@@ -96,38 +48,9 @@ defmodule AnomaExplorerWeb.IndexerLive do
   end
 
   @impl true
-  def handle_info({:auto_test_connection, url}, socket) do
-    # Only auto-test if the URL hasn't changed since the timer was set
-    if socket.assigns.url_input == url do
-      status = Client.test_connection(url)
-
-      {:noreply,
-       socket
-       |> assign(:status, status)
-       |> assign(:auto_test_timer, nil)
-       |> assign(:auto_testing, false)}
-    else
-      {:noreply, socket}
-    end
-  end
-
-  @impl true
-  def handle_info({:settings_changed, {:app_setting_updated, _}}, socket) do
-    url = Settings.get_envio_url() || ""
-    # Update both @url and @url_input to avoid race condition where
-    # the input field shows stale data after external updates
-    {:noreply, socket |> assign(:url, url) |> assign(:url_input, url)}
-  end
-
-  @impl true
-  def handle_info({:settings_changed, _}, socket), do: {:noreply, socket}
-
-  # Admin authorization info messages
-  def handle_info(:admin_check_expiration, socket) do
-    case AdminAuth.handle_info(:admin_check_expiration, socket) do
-      {:handled, socket} -> {:noreply, socket}
-      :not_handled -> {:noreply, socket}
-    end
+  def handle_info(:do_test_connection, socket) do
+    status = Client.test_connection(socket.assigns.url)
+    {:noreply, socket |> assign(:status, status) |> assign(:testing, false)}
   end
 
   @impl true
@@ -144,7 +67,7 @@ defmodule AnomaExplorerWeb.IndexerLive do
           </div>
         </div>
         <p class="text-sm text-base-content/60 ml-[52px]">
-          Configure the
+          View the configured
           <a
             href="https://envio.dev"
             target="_blank"
@@ -160,58 +83,43 @@ defmodule AnomaExplorerWeb.IndexerLive do
       <div class="stat-card">
         <h2 class="text-lg font-semibold mb-4">GraphQL Endpoint</h2>
 
-        <form phx-submit="save_url" phx-change="update_url" class="space-y-4">
+        <div class="space-y-4">
           <div class="form-control">
             <label class="label">
-              <span class="label-text">Envio GraphQL URL</span>
+              <span class="label-text font-medium">ENVIO_GRAPHQL_URL</span>
+              <span class="label-text-alt badge badge-ghost">Environment Variable</span>
             </label>
             <div class="flex gap-2 items-center">
               <div class="relative flex-1">
-                <input
-                  type="url"
-                  id="envio-url-input"
-                  name="url"
-                  value={@url_input}
-                  placeholder="https://indexer.dev.hyperindex.xyz/xxx/v1/graphql"
-                  class="input input-bordered w-full font-mono text-sm pr-8"
-                />
-                <div class="absolute right-2 top-1/2 -translate-y-1/2">
-                  <%= if @auto_testing do %>
-                    <span class="loading loading-spinner loading-xs text-base-content/50"></span>
-                  <% else %>
-                    <%= if @status do %>
-                      <div
-                        class={[
-                          "w-3 h-3 rounded-full",
-                          if(elem(@status, 0) == :ok, do: "bg-success", else: "bg-error")
-                        ]}
-                        title={elem(@status, 1)}
-                      >
-                      </div>
-                    <% end %>
-                  <% end %>
-                </div>
-              </div>
-              <.protected_button
-                authorized={@admin_authorized}
-                type="submit"
-                disabled={@saving}
-                class="btn btn-primary"
-              >
-                <%= if @saving do %>
-                  <span class="loading loading-spinner loading-sm"></span> Saving...
+                <%= if @url != "" do %>
+                  <code class="block w-full font-mono text-sm bg-base-200 px-4 py-3 rounded-lg overflow-x-auto">
+                    {@url}
+                  </code>
                 <% else %>
-                  Save
+                  <div class="w-full px-4 py-3 rounded-lg bg-base-200 text-base-content/50 italic">
+                    Not configured
+                  </div>
                 <% end %>
-              </.protected_button>
+              </div>
+              <%= if @url != "" do %>
+                <.copy_button text={@url} tooltip="Copy URL" size="sm" />
+                <button
+                  type="button"
+                  phx-click="test_connection"
+                  disabled={@testing}
+                  class="btn btn-outline btn-sm"
+                >
+                  <%= if @testing do %>
+                    <span class="loading loading-spinner loading-xs"></span>
+                  <% else %>
+                    <.icon name="hero-signal" class="w-4 h-4" />
+                  <% end %>
+                  Test
+                </button>
+              <% end %>
             </div>
-            <label class="label">
-              <span class="label-text-alt text-base-content/50">
-                The GraphQL endpoint URL from your Envio Hyperindex deployment
-              </span>
-            </label>
           </div>
-        </form>
+        </div>
 
         <%= if @status do %>
           <div class={[
@@ -225,34 +133,27 @@ defmodule AnomaExplorerWeb.IndexerLive do
             <span>{elem(@status, 1)}</span>
           </div>
         <% end %>
-
-        <%= if @url != "" do %>
-          <div class="mt-6 pt-4 border-t border-base-300">
-            <h3 class="text-sm font-semibold mb-2">Current Configuration</h3>
-            <div class="flex items-center gap-2">
-              <code class="text-sm font-mono bg-base-200 px-2 py-1 rounded flex-1 overflow-x-auto">
-                {@url}
-              </code>
-              <.copy_button text={@url} tooltip="Copy URL" size="sm" />
-            </div>
-          </div>
-        <% end %>
       </div>
 
       <div class="stat-card mt-6">
-        <h3 class="text-sm font-semibold mb-2">Usage Notes</h3>
-        <ul class="text-sm text-base-content/70 space-y-1 list-disc list-inside">
-          <li>The URL is stored in the database and persists across restarts</li>
+        <h3 class="text-sm font-semibold mb-3">Configuration</h3>
+        <p class="text-sm text-base-content/70 mb-4">
+          The indexer endpoint is configured via environment variable. To change it:
+        </p>
+        <ol class="text-sm text-base-content/70 space-y-2 list-decimal list-inside">
           <li>
-            Falls back to <code class="bg-base-200 px-1 rounded">ENVIO_GRAPHQL_URL</code>
-            environment variable if not set
+            Set the <code class="bg-base-200 px-1.5 py-0.5 rounded font-mono">ENVIO_GRAPHQL_URL</code>
+            environment variable in your deployment platform
           </li>
-          <li>Use "Test Connection" to verify the endpoint is accessible</li>
-          <li>Changes take effect immediately for new dashboard queries</li>
-        </ul>
-      </div>
+          <li>Restart the application for changes to take effect</li>
+        </ol>
 
-      <.unlock_modal show={@admin_show_unlock_modal} error={@admin_error} />
+        <div class="mt-4 p-3 bg-base-200 rounded-lg">
+          <p class="text-xs font-mono text-base-content/60">
+            Example: ENVIO_GRAPHQL_URL=https://indexer.dev.hyperindex.xyz/&lt;hash&gt;/v1/graphql
+          </p>
+        </div>
+      </div>
     </Layouts.app>
     """
   end
