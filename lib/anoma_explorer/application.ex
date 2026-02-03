@@ -19,6 +19,8 @@ defmodule AnomaExplorer.Application do
       AnomaExplorer.Settings.MonitoringManager,
       # WebSocket subscriber for real-time stats updates (isolated supervisor with relaxed restarts)
       AnomaExplorer.Indexer.StatsSupervisor,
+      # Notifier for list view real-time updates (listens to StatsSubscriber broadcasts)
+      AnomaExplorer.Indexer.ListUpdateNotifier,
       # Start to serve requests, typically the last entry
       AnomaExplorerWeb.Endpoint
     ]

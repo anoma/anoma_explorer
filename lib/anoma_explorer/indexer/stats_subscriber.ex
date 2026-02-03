@@ -21,10 +21,12 @@ defmodule AnomaExplorer.Indexer.StatsSubscriber do
   @initial_backoff_ms 1_000
   @max_backoff_ms 30_000
 
-  # GraphQL-WS protocol message types (supporting both old and new protocol)
+  # GraphQL-WS protocol message types
+  # Note: Envio/Hasura uses the legacy subscriptions-transport-ws protocol
+  # which uses "start" instead of "subscribe" (graphql-transport-ws)
   @gql_connection_init "connection_init"
   @gql_connection_ack "connection_ack"
-  @gql_subscribe "subscribe"
+  @gql_start "start"
   @gql_next "next"
   @gql_data "data"
   @gql_error "error"
@@ -342,7 +344,7 @@ defmodule AnomaExplorer.Indexer.StatsSubscriber do
     msg =
       Jason.encode!(%{
         id: id,
-        type: @gql_subscribe,
+        type: @gql_start,
         payload: %{query: query}
       })
 

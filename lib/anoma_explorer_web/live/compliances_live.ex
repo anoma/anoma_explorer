@@ -10,8 +10,10 @@ defmodule AnomaExplorerWeb.CompliancesLive do
 
   alias AnomaExplorerWeb.IndexerSetupComponents
   alias AnomaExplorerWeb.Layouts
+  alias AnomaExplorerWeb.Live.Helpers.RealtimeHelpers
   alias AnomaExplorerWeb.Live.Helpers.SetupHandlers
   alias AnomaExplorerWeb.Live.Helpers.SharedHandlers
+  alias AnomaExplorerWeb.RealtimeComponents
   import AnomaExplorerWeb.Live.Helpers.FilterHelpers
 
   @default_filters %{
@@ -38,7 +40,8 @@ defmodule AnomaExplorerWeb.CompliancesLive do
      |> assign(:filter_version, 0)
      |> assign(:show_filters, false)
      |> assign(:selected_chain, nil)
-     |> SetupHandlers.init_setup_assigns()}
+     |> SetupHandlers.init_setup_assigns()
+     |> RealtimeHelpers.init_realtime(:compliances, @default_filters)}
   end
 
   @impl true
@@ -66,6 +69,28 @@ defmodule AnomaExplorerWeb.CompliancesLive do
   @impl true
   def handle_info({:setup_auto_test_connection, url}, socket) do
     {:noreply, SetupHandlers.handle_auto_test(socket, url)}
+  end
+
+  @impl true
+  def handle_info({:new_items_available, :compliances, meta}, socket) do
+    RealtimeHelpers.handle_new_items(socket, meta)
+  end
+
+  @impl true
+  def handle_event("refresh_list", _params, socket) do
+    socket =
+      socket
+      |> RealtimeHelpers.dismiss_notification()
+      |> assign(:page, 0)
+      |> assign(:loading, true)
+      |> load_compliances()
+
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("dismiss_notification", _params, socket) do
+    {:noreply, RealtimeHelpers.dismiss_notification(socket)}
   end
 
   @impl true
@@ -214,6 +239,12 @@ defmodule AnomaExplorerWeb.CompliancesLive do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_path="/compliances">
+      <RealtimeComponents.new_items_banner
+        visible={@new_items_available}
+        entity_name="compliance units"
+        count={@new_items_count}
+      />
+
       <div class="page-header">
         <div>
           <h1 class="page-title flex items-center gap-2">
