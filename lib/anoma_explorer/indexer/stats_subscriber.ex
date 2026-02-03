@@ -374,24 +374,32 @@ defmodule AnomaExplorer.Indexer.StatsSubscriber do
   end
 
   defp broadcast_stats([stats | _]) do
-    formatted_stats = %{
-      transactions: stats["transactions"] || 0,
-      resources: stats["resources"] || 0,
-      consumed: stats["resourcesConsumed"] || 0,
-      created: stats["resourcesCreated"] || 0,
-      actions: stats["actions"] || 0,
-      compliances: stats["complianceUnits"] || 0,
-      logics: stats["logicInputs"] || 0,
-      commitment_roots: stats["commitmentRoots"] || 0,
-      last_updated_block: stats["lastUpdatedBlock"] || 0,
-      last_updated_timestamp: stats["lastUpdatedTimestamp"] || 0
-    }
-
+    formatted_stats = format_stats_response(stats)
     Logger.debug("StatsSubscriber: Broadcasting stats update")
     Phoenix.PubSub.broadcast(@pubsub, @topic, {:stats_updated, formatted_stats})
   end
 
   defp broadcast_stats(_), do: :ok
+
+  # Mapping from internal field names to GraphQL response field names
+  @stats_field_mapping [
+    {:transactions, "transactions"},
+    {:resources, "resources"},
+    {:consumed, "resourcesConsumed"},
+    {:created, "resourcesCreated"},
+    {:actions, "actions"},
+    {:compliances, "complianceUnits"},
+    {:logics, "logicInputs"},
+    {:commitment_roots, "commitmentRoots"},
+    {:last_updated_block, "lastUpdatedBlock"},
+    {:last_updated_timestamp, "lastUpdatedTimestamp"}
+  ]
+
+  defp format_stats_response(stats) do
+    Map.new(@stats_field_mapping, fn {key, graphql_key} ->
+      {key, Map.get(stats, graphql_key, 0) || 0}
+    end)
+  end
 
   defp broadcast_transactions(transactions) when is_list(transactions) do
     Logger.debug("StatsSubscriber: Broadcasting #{length(transactions)} transactions")

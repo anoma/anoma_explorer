@@ -4,6 +4,7 @@ defmodule AnomaExplorer.Indexer.GraphQLTest do
   """
   use AnomaExplorer.DataCase, async: false
 
+  alias AnomaExplorer.Indexer.Cache
   alias AnomaExplorer.Indexer.GraphQL
 
   import Mox
@@ -20,9 +21,9 @@ defmodule AnomaExplorer.Indexer.GraphQLTest do
     )
 
     # Clear the cache before each test to avoid interference
-    case GenServer.whereis(AnomaExplorer.Indexer.Cache) do
+    case GenServer.whereis(Cache) do
       nil -> :ok
-      _pid -> AnomaExplorer.Indexer.Cache.clear()
+      _pid -> Cache.clear()
     end
 
     on_exit(fn ->
@@ -50,7 +51,7 @@ defmodule AnomaExplorer.Indexer.GraphQLTest do
                "complianceUnits" => 2,
                "logicInputs" => 1,
                "commitmentRoots" => 5,
-               "lastUpdatedBlock" => 12345,
+               "lastUpdatedBlock" => 12_345,
                "lastUpdatedTimestamp" => 1_700_000_000
              }
            ]
@@ -66,7 +67,7 @@ defmodule AnomaExplorer.Indexer.GraphQLTest do
       assert stats.compliances == 2
       assert stats.logics == 1
       assert stats.commitment_roots == 5
-      assert stats.last_updated_block == 12345
+      assert stats.last_updated_block == 12_345
     end
 
     test "returns error when not configured" do

@@ -99,7 +99,7 @@ defmodule AnomaExplorer.Indexer.GraphQLIntegrationTest do
 
         {:error, {:graphql_error, errors}} ->
           # Check if Stats field doesn't exist
-          error_messages = Enum.map(errors, & &1["message"]) |> Enum.join(", ")
+          error_messages = Enum.map_join(errors, ", ", & &1["message"])
 
           if String.contains?(error_messages, "Stats") do
             flunk("Stats table not found in schema. Error: #{error_messages}")

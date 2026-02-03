@@ -78,6 +78,20 @@ defmodule AnomaExplorer.Indexer.GraphQL do
           last_updated_timestamp: integer()
         }
 
+  # Empty stats map for when no data exists
+  @empty_stats %{
+    transactions: 0,
+    resources: 0,
+    consumed: 0,
+    created: 0,
+    actions: 0,
+    compliances: 0,
+    logics: 0,
+    commitment_roots: 0,
+    last_updated_block: 0,
+    last_updated_timestamp: 0
+  }
+
   @doc """
   Gets aggregate statistics for the dashboard.
 
@@ -116,55 +130,37 @@ defmodule AnomaExplorer.Indexer.GraphQL do
 
     case execute(query) do
       {:ok, %{"Stats" => [stats | _]}} ->
-        {:ok,
-         %{
-           transactions: stats["transactions"] || 0,
-           resources: stats["resources"] || 0,
-           consumed: stats["resourcesConsumed"] || 0,
-           created: stats["resourcesCreated"] || 0,
-           actions: stats["actions"] || 0,
-           compliances: stats["complianceUnits"] || 0,
-           logics: stats["logicInputs"] || 0,
-           commitment_roots: stats["commitmentRoots"] || 0,
-           last_updated_block: stats["lastUpdatedBlock"] || 0,
-           last_updated_timestamp: stats["lastUpdatedTimestamp"] || 0
-         }}
+        {:ok, build_stats_from_response(stats)}
 
       {:ok, %{"Stats" => []}} ->
-        # No stats yet - return zeros
-        {:ok,
-         %{
-           transactions: 0,
-           resources: 0,
-           consumed: 0,
-           created: 0,
-           actions: 0,
-           compliances: 0,
-           logics: 0,
-           commitment_roots: 0,
-           last_updated_block: 0,
-           last_updated_timestamp: 0
-         }}
+        {:ok, @empty_stats}
 
       {:ok, _} ->
-        # Fallback for unexpected response shape
-        {:ok,
-         %{
-           transactions: 0,
-           resources: 0,
-           consumed: 0,
-           created: 0,
-           actions: 0,
-           compliances: 0,
-           logics: 0,
-           commitment_roots: 0,
-           last_updated_block: 0,
-           last_updated_timestamp: 0
-         }}
+        {:ok, @empty_stats}
 
       error ->
         error
     end
+  end
+
+  # Mapping from internal field names to GraphQL response field names
+  @stats_field_mapping [
+    {:transactions, "transactions"},
+    {:resources, "resources"},
+    {:consumed, "resourcesConsumed"},
+    {:created, "resourcesCreated"},
+    {:actions, "actions"},
+    {:compliances, "complianceUnits"},
+    {:logics, "logicInputs"},
+    {:commitment_roots, "commitmentRoots"},
+    {:last_updated_block, "lastUpdatedBlock"},
+    {:last_updated_timestamp, "lastUpdatedTimestamp"}
+  ]
+
+  defp build_stats_from_response(stats) do
+    Map.new(@stats_field_mapping, fn {key, graphql_key} ->
+      {key, Map.get(stats, graphql_key, 0) || 0}
+    end)
   end
 
   @doc """
