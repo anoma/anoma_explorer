@@ -66,7 +66,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.docker.workdir }}
-          file: ${{ matrix.docker.dockerfile }}
+          file: ${{ matrix.docker.workdir }}/${{ matrix.docker.dockerfile }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
