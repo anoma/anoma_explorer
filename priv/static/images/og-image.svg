@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg-gradient)"/>
+
+  <!-- Subtle grid pattern -->
+  <g opacity="0.05">
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="1"/>
+    </pattern>
+    <rect width="1200" height="630" fill="url(#grid)"/>
+  </g>
+
+  <!-- Anoma Logo (simplified version) -->
+  <g transform="translate(500, 180) scale(0.8)">
+    <path fill="#F51C2B" d="M142.8,221.5c0,3.2-2.8,5.6-5.9,5.3c-39.8-4-71-37.7-71-78.6s31.1-74.6,71-78.6c3.2-0.3,5.9,2.2,5.9,5.3V102
+      c0,2.6-1.9,4.9-4.5,5.3c-19.7,3.1-34.8,20.2-34.8,40.8s15.1,37.7,34.8,40.8c2.6,0.4,4.5,2.7,4.5,5.3V221.5z"/>
+    <path fill="#BE202C" d="M223.5,155.7c-3.5,37.2-32.9,67-70,71c-3.2,0.3-6-2.1-6-5.3v-27.2c0-2.6,1.9-4.8,4.4-5.3
+      c17.4-3,31.1-17,33.7-34.5c0.4-2.6,2.7-4.5,5.3-4.5H218C221.3,149.8,223.8,152.6,223.5,155.7z"/>
+    <path fill="#FFFFFF" d="M142.9,112.6v31.8c0,3,2.4,5.4,5.4,5.4h32.2c3.2,0,5.7-2.8,5.3-6c-2.3-19.2-15.7-34.1-36.9-36.5
+      C145.7,106.9,142.9,109.4,142.9,112.6z"/>
+    <path fill="#999999" d="M180.7,74.7L180.7,74.7c0,2,1.1,3.8,2.8,4.8c12.5,7.1,22.9,17.5,30,30c1,1.7,2.8,2.8,4.8,2.8h0.1
+      c3,0,5.5-2.5,5.5-5.5V74.6c0-3-2.5-5.5-5.5-5.5h-32.2C183.2,69.2,180.7,71.6,180.7,74.7z"/>
+  </g>
+
+  <!-- Title -->
+  <text x="600" y="420" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="56" font-weight="600" fill="white">
+    Anoma Explorer
+  </text>
+
+  <!-- Tagline -->
+  <text x="600" y="480" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#9ca3af">
+    Browse transactions, resources, and actions on the Anoma Protocol
+  </text>
+
+  <!-- Bottom accent line -->
+  <rect x="500" y="530" width="200" height="4" rx="2" fill="#F51C2B"/>
+</svg>
