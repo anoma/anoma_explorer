@@ -129,7 +129,8 @@ mix precommit
 - `lib/anoma_explorer/settings/`: Persistent application settings (contracts, networks, indexer URL, API keys)
 - `lib/anoma_explorer_web/live/`: LiveView modules for dashboard, explorer pages, settings, and GraphQL playground
 - `assets/`: Frontend assets (Tailwind CSS and JavaScript)
-- `indexer/`: TypeScript project defining the Envio Hyperindex indexer (see `indexer/README.md`)
+
+The Envio Hyperindex indexer lives in a separate repository: [anoma/anoma-envio](https://github.com/anoma/anoma-envio)
 
 ## License
 
