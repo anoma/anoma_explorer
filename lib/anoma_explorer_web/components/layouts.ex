@@ -31,14 +31,32 @@ defmodule AnomaExplorerWeb.Layouts do
           <div class="p-6 border-b border-base-300 sidebar-header">
             <div class="flex items-center justify-between">
               <a href="/" class="flex items-center gap-3 sidebar-logo-full">
-                <img src="/images/anoma-logo.svg" alt="Anoma" class="w-10 h-10" />
+                <img
+                  src="/images/anoma-logo.svg"
+                  alt="Anoma"
+                  class="w-10 h-10 block [[data-theme=dark]_&]:hidden"
+                />
+                <img
+                  src="/images/anoma-logo-dark.svg"
+                  alt="Anoma"
+                  class="w-10 h-10 hidden [[data-theme=dark]_&]:block"
+                />
                 <div class="sidebar-logo-text">
                   <span class="text-lg font-semibold text-base-content">Anoma</span>
                   <span class="text-lg font-light text-base-content/70">Explorer</span>
                 </div>
               </a>
               <a href="/" class="sidebar-logo-icon">
-                <img src="/images/anoma-logo.svg" alt="Anoma" class="w-10 h-10" />
+                <img
+                  src="/images/anoma-logo.svg"
+                  alt="Anoma"
+                  class="w-10 h-10 block [[data-theme=dark]_&]:hidden"
+                />
+                <img
+                  src="/images/anoma-logo-dark.svg"
+                  alt="Anoma"
+                  class="w-10 h-10 hidden [[data-theme=dark]_&]:block"
+                />
               </a>
               <div class="sidebar-theme-toggle">
                 <.theme_toggle />
